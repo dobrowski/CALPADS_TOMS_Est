@@ -1,24 +1,5 @@
 
 
-library(tidyverse)
-library(janitor)
-library(readxl)
-library(here)
-library(ggthemes)
-library(googlesheets4)
-library(MCOE)
-
-options(scipen=999)
-
-
-# 2022 Google Sheet 
-# sheet <- "https://docs.google.com/spreadsheets/d/1iS2Sd37hU7LYzakI2fbiotnzYn60cVp0d0pMB9k6zXk/edit#gid=0"
-
-# 2023 Google Sheet
-# sheet <- "https://docs.google.com/spreadsheets/d/1E7x2W-bWkZGenZTPVmlyGSl0LQPfrHc2s8ZLILKUOGw/edit#gid=0"
-
-# 2024 Google Sheet
- sheet <- "https://docs.google.com/spreadsheets/d/1RSRPRRqcS8tOg7-uXG6dFgoHwn4dcAitBjfrnhkFYHA/edit?gid=0#gid=0"
 
 
 ### Load files -----
@@ -72,6 +53,16 @@ nmcusd.24 <- read_xlsx(here("data","nmcusd", "27738250000000_CAASPP_Student_Scor
                      skip = 1)
  nmcusd.24 <- use.TOMS(nmcusd.24)
 
+ 
+ 
+ mpusd.24 <- read_xlsx(here("data","mpusd", "27660920000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                        skip = 1)
+ mpusd.24 <- use.TOMS(mpusd.24)
+ 
+ 
+ 
+ 
+ 
 # 
 
 
@@ -744,7 +735,8 @@ dfs(nmcusd.24)
          # pivot_longer(cols = c(HispanicOrLatinoEthnicity:Filipino,EL)) %>%
          summarise( across(c(HispanicOrLatinoEthnicity:ELdash), ~  sum(!is.na(.)))) %>%
          pivot_longer(cols = c(HispanicOrLatinoEthnicity:ELdash)) %>%
-         filter(if(limit.30 == TRUE )value >= 30 | name == "HOM" & value >= 15 else value >= 1) 
+         filter(if(limit.30 == TRUE )value >= 30 | name == "HOM" & value >= 15 else value >= 1) %>%
+         print(n = 30)
  }
 
  
@@ -853,12 +845,6 @@ studentsss <-     deparse(substitute(students))
  
  
  
- 
- 
- 
- 
- 
- 
   ### Student Growth in Year ----
   
   student.growth <- function(df.old, df.new, filename) {
@@ -894,270 +880,8 @@ temp <-   student.growth(pg.22,pg.23, "Pacific Grover 2023 Student Scale Score C
   
 student.growth(wash.22,wash.23, "Washington 2023 Student Scale Score Change")
   
-  ####  ELPAC by School -----
-  
-  
-  elpac.school <- function(df) {
-      
-      df %>% 
-          filter( Subject =="ELPAC" ) %>%
-          mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
-                 GradeLevelWhenAssessed2 = factor(GradeLevelWhenAssessed, levels = c("KG",1,2,3,4,5,6,7,8,11)),
-                 AssessmentName = case_when(AssessmentName == "Kindergarten ELPAC Summative" ~ "Grade  KG ELPAC Summative",
-                                            AssessmentName == "Grade 11 ELA Summative" ~ "Grade11 ELA Summative",
-                                            AssessmentName == "Grade 11 Math Summative" ~ "Grade11 Math Summative",
-                                            TRUE ~AssessmentName)
-          ) %>%
-          ggplot( aes( y = GradeLevelWhenAssessed, fill = ScaleScoreAchievementLevel)) +
-          geom_bar(color = "black") +
-          facet_wrap(vars(SchoolName),
-                     # vars(GradeLevelWhenAssessed),
-                     #    scales = "free"
-          ) +
-          geom_text(    stat = "count",
-                        aes(label = ..count..), 
-                        position = position_stack(vjust = 0.5), size = 2) +
-          theme_hc() +
-          scale_fill_brewer() + 
-          labs(y = "",
-               x = "",
-               fill = "Achievement Level",
-               title = "ELPAC Count of Students at each Achievement Level")
-      
-  }
 
-  king.city %>% 
-      filter(str_detect(DistrictName,"King City")) %>%
-  elpac.school()  
-  
-  ggsave(here("output",paste0("King City", " ELPAC by School ", Sys.Date(),".png")), width = 12, height = 7)
-  
-  alisal %>% 
-      filter(str_detect(DistrictName,"Alisal")) %>%
-      elpac.school()  
-  
-  ggsave(here("output",paste0("Alisal", " ELPAC by School ", Sys.Date(),".png")), width = 12, height = 7)
-  
-  
-  salinas.city %>% 
-      filter(str_detect(DistrictName,"Salinas City") ,
-             Subject =="ELPAC" ) %>%
-      mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
-             GradeLevelWhenAssessed2 = factor(GradeLevelWhenAssessed, levels = c("KG",1,2,3,4,5,6,7,8,11)),
-             AssessmentName = case_when(AssessmentName == "Kindergarten ELPAC Summative" ~ "Grade  KG ELPAC Summative",
-                                        AssessmentName == "Grade 11 ELA Summative" ~ "Grade11 ELA Summative",
-                                        AssessmentName == "Grade 11 Math Summative" ~ "Grade11 Math Summative",
-                                        TRUE ~AssessmentName)
-      ) %>%
-      ggplot( aes( y = GradeLevelWhenAssessed, fill = ScaleScoreAchievementLevel)) +
-      geom_bar(color = "black") +
-      # facet_grid(vars(SchoolName),
-      #            vars(GradeLevelWhenAssessed),
-      #            scales = "free") +
-      facet_wrap(vars(SchoolName),
-                 # vars(GradeLevelWhenAssessed),
-             #    scales = "free"
-                 ) +
-      geom_text(    stat = "count",
-                    aes(label = ..count..),
-                    position = position_stack(vjust = 0.5), size = 2) +
-      theme_hc() +
-      scale_fill_brewer() + 
-      labs(y = "",
-           x = "",
-           fill = "Achievement Level",
-           title = "Count of Students at each Achievement Level")
-  
-  
-  ggsave(here("output",paste0("Salinas City", " ELPAC by School ", Sys.Date(),".png")), width = 12, height = 7)
-  
-  
-  soledad %>% 
-      filter(str_detect(DistrictName,"Soledad")) %>%
-      elpac.school()  
-  
-  ggsave(here("output",paste0("Soledad", " ELPAC by School ", Sys.Date(),".png")), width = 12, height = 7)
-  
 
- 
- 
- #### ELPI ----
- 
- # Calculates elpi levels 
- elpi.levels <- function(df,dist) {
-     
-      
-      df %>% 
-     filter(Subject =="ELPAC" ,
-             str_detect(DistrictName,dist)) %>%
-     mutate(elpi_level = case_when(
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "KG" ~ cut(ScaleScore,
-                                            c(1149, 1373, 1397, 1421, 1447, 1473, 1700),
-                                            labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "01" ~ cut(ScaleScore,
-                                              c(1149, 1410, 1432 , 1454, 1480 , 1506, 1700),
-                                              labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "02" ~ cut(ScaleScore,
-                                                                   c(1149, 1423, 1446 , 1470, 1500 , 1531, 1700),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "03" ~ cut(ScaleScore,
-                                                                   c(1149, 1447, 1467 , 1487, 1510 , 1534, 1800),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "04" ~ cut(ScaleScore,
-                                                                   c(1149, 1458, 1478 , 1498, 1523  , 1548, 1800),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "05" ~ cut(ScaleScore,
-                                                                   c(1149, 1466, 1489 , 1513, 1536 , 1559, 1800),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "06" ~ cut(ScaleScore,
-                                                                   c(1149, 1474, 1495 , 1516, 1541  , 1566, 1900),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "07" ~ cut(ScaleScore,
-                                                                   c(1149, 1480, 1503 , 1526, 1550  , 1575, 1900),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "08" ~ cut(ScaleScore,
-                                                                   c(1149, 1485,1509  , 1533, 1561  , 1589, 1900),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "09" ~ cut(ScaleScore,
-                                                                   c(1149, 1492, 1518 , 1544, 1574 , 1605, 1950),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "10" ~ cut(ScaleScore,
-                                                                   c(1149, 1492, 1518 , 1544, 1574 , 1605, 1950),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "11" ~ cut(ScaleScore,
-                                                                   c(1149, 1499,  1526  , 1554, 1584 , 1614, 1950),
-                                                                   labels=1:6),
-         Subject == "ELPAC" & GradeLevelWhenAssessed == "12" ~ cut(ScaleScore,
-                                                                   c(1149, 1499, 1526 , 1554, 1584 , 1614, 1950),
-                                                                   labels=1:6)
-
-     ))
- }
- 
-  # Compares a district across years to calculate estimated ELPI indicator level
-  
- elpi.change <- function(dist, df.old, df.new, filename) {
-     
-     
-     
-     ddff <-     deparse(substitute(df.new)) 
-     
-     
-     temp.elpi.new <- elpi.levels(df.new, dist) %>%
-         select(StudentIdentifier,
-                elpac.new = elpi_level)
-     temp.elpi.old <- elpi.levels(df.old, dist) %>%
-         select(StudentIdentifier,
-                elpac.old = elpi_level)
-     
-     temp.elpi <- full_join(temp.elpi.old,temp.elpi.new) %>%
-         na.omit() %>%
-         mutate(elpi.change = as.numeric(elpac.new) - as.numeric(elpac.old),
-                elpi.pos = case_when( elpi.change > 0 ~ TRUE,
-                                      elpac.new == 6 ~ TRUE,
-                                      TRUE ~ FALSE))
-
-     
-     # Saves list with students to see which are included in progress calculation
-     write_csv(temp.elpi, here("elpi" ,paste0(filename,".csv")))
-     
-     elpi.perc <- mean(temp.elpi$elpi.pos) 
-     
-      holder <- tibble_row(elpi.perc, ddff)
-     
-     # Saves the overall rate to the google sheet
-     sheet_append(ss = sheet,
-                  sheet = "ELPI",
-                  data = holder )
-     
-     elpi.perc
-
-     
- }
- 
- 
- 
- elpi.change("King City", king.city.22, king.city.23, "King City ELPI 2023")
- 
- 
- elpi.change("San Lucas", san.lucas.22, san.lucas.23, "San Lucas ELPI 2023")
- 
- elpi.change("San Ardo", san.ardo.22, san.ardo.23, "San Ardo ELPI 2023")
- 
- elpi.change("Monterey County", alt.elpi.22, alt.elpi.23, "Alt Ed ELPI 2023")
- 
-  
- # alisal.elpac.21  <-  read_excel(here("data","ELPAC_for_ELPI_-_20_to_21_(Alisal_USD)_2020-21.xlsx") ) 
- # alisal.elpac <- read_excel(here("data","ELPAC_for_ELPI_-_21_to_22_(Alisal_USD)_2021-22.xlsx") ) 
- # 
- # 
- # alisal.elpac.21  <-  read_csv(here("data","ELPAC_for_ELPI_-_20_to_21_(Alisal_USD)_2020-21.csv") ) 
- # alisal.elpac <- read_csv(here("data","ELPAC_for_ELPI_-_21_to_22_(Alisal_USD)_2021-22.csv") ) 
- # 
- # alisal.elpac <- clean.df(alisal.elpac)
- # alisal.elpac.21 <- clean.df(alisal.elpac.21)
- # 
- # 
- # 
- # elpi.change("Alisal", alisal.elpac.21, alisal.elpac, "Alisal ELPI")
- 
-#  
-# scesd.elpac.21  <-  read_csv(here("data","SCESD_Summative_ELPAC_2021.csv") ) 
-# scesd.elpac <- read_csv(here("data","SCESD_Summative_ELPAC_2022.csv") ) 
-#  
-# scesd.elpac <- clean.df(scesd.elpac)
-#  scesd.elpac.21 <- clean.df(scesd.elpac.21)
-#  
-#  
-#  elpi.change("Salinas City", scesd.elpac.21, scesd.elpac, "SCESD ELPI")
-#  
-  
-
- 
-### ELPI by School calculations ----
- 
- 
- school.list <- unique(alisal.23$SchoolName)
- 
- for (i in school.list) {
-     elpi.change("Alisal",
-                 alisal.22,
-                 alisal.23 %>%
-                     filter(str_detect(SchoolName,i)),
-                 i)
-     
- }
- 
- 
- 
- 
- 
- school.list <- unique(king.city.23$SchoolName)
- 
- for (i in school.list) {
-     elpi.change("King City",
-                 king.city.22,
-                 king.city.23 %>%
-                     filter(str_detect(SchoolName,i)),
-                 i)
-     
- }
- 
- 
-king.city.23.k5 <-  king.city.23 %>%
-     filter(GradeLevelWhenAssessed %in% c("KG","01","02","03","04","05"))
- 
- elpi.change("King City",
-             king.city.22,
-             king.city.23.k5
-             ,
-             "King City KG to 5th")
- 
- 
- 
- 
- 
- 
  ### Add demo -----
  
  
@@ -1209,40 +933,41 @@ mcoe.alt.ed.23 <- clean.df(mcoe.alt.ed.23)
 soledad.23 <-  add.demo(soledad.23, soledad.23.demo)
 
 
-  overall.graph(nmcusd.24)
+  overall.graph(mpusd.24)
   
-  graph.wrap(nmcusd.24)
+  graph.wrap(mpusd.24)
   
-  graph.grid(nmcusd.24)
+  graph.grid(mpusd.24)
   
-  save.overall(nmcusd.24)
-  save.wrap(nmcusd.24)
-  save.grid(nmcusd.24)
+  save.overall(mpusd.24)
+  save.wrap(mpusd.24)
+  save.grid(mpusd.24)
   
   
   elpi.change("Washington", wash.22, wash.23, "Washington ELPI 2023")
   
-  passing.perc(nmcusd.24)
+  passing.perc(mpusd.24)
   
   
-  dfs(nmcusd.24)
+  dfs(mpusd.24)
   
-  student.group.size(nmcusd.24) 
+  student.group.size(mpusd.24) 
   
   
-   dfs2(nmcusd.24,White) 
-   dfs2(nmcusd.24,ELdash) 
-   dfs2(nmcusd.24,MigrantStatus) 
-#   dfs2(nmcusd.24,Filipino) 
- #  dfs2(nmcusd.24,TwoorMoreRaces) 
- #  dfs2(nmcusd.24,BlackOrAfricanAmerican) 
-#   dfs2(nmcusd.24,NativeHawaiianOrOtherPacificIslander) 
-   dfs2(nmcusd.24,HispanicOrLatinoEthnicity) 
-   dfs2(nmcusd.24,SpecialEducationforTesting) 
-   dfs2(nmcusd.24,EconomicDisadvantageTesting) 
-   dfs2(nmcusd.24 ,SED) 
-   dfs2(nmcusd.24,HOM) 
-   dfs2(nmcusd.24,SWD) 
+   dfs2(mpusd.24,White) 
+   dfs2(mpusd.24,ELdash) 
+   dfs2(mpusd.24,Asian)
+    #  dfs2(mpusd.24,MigrantStatus) 
+   dfs2(mpusd.24,Filipino) 
+   dfs2(mpusd.24,TwoorMoreRaces) 
+   dfs2(mpusd.24,BlackorAfricanAmerican) 
+   dfs2(mpusd.24,HawaiianOrOtherPacificIslander) 
+   dfs2(mpusd.24,HispanicOrLatinoEthnicity) 
+#   dfs2(mpusd.24,SpecialEducationforTesting) 
+#   dfs2(mpusd.24,EconomicDisadvantageTesting) 
+   dfs2(mpusd.24 ,SED) 
+   dfs2(mpusd.24,HOM) 
+   dfs2(mpusd.24,SWD) 
 
    
  ### By school in a district -------  
@@ -1359,8 +1084,8 @@ soledad.23 <-  add.demo(soledad.23, soledad.23.demo)
    
    
    
-   school.split <-  nmcusd.24 %>%
-       filter(str_detect(CALPADSDistrictName,"North Monterey County")) 
+   school.split <-  mpusd.24 %>%
+       filter(str_detect(CALPADSDistrictName,"Monterey Peninsula")) 
    
    school.split %>%
        split(school.split$CALPADSSchoolName) %>%

@@ -15,3 +15,42 @@ library(ggthemes)
 library(googlesheets4)
 
 options(scipen=999)
+
+con <- mcoe_sql_con()
+
+# 2022 Google Sheet 
+# sheet <- "https://docs.google.com/spreadsheets/d/1iS2Sd37hU7LYzakI2fbiotnzYn60cVp0d0pMB9k6zXk/edit#gid=0"
+
+# 2023 Google Sheet
+# sheet <- "https://docs.google.com/spreadsheets/d/1E7x2W-bWkZGenZTPVmlyGSl0LQPfrHc2s8ZLILKUOGw/edit#gid=0"
+
+# 2024 Google Sheet
+sheet <- "https://docs.google.com/spreadsheets/d/1RSRPRRqcS8tOg7-uXG6dFgoHwn4dcAitBjfrnhkFYHA/edit?gid=0#gid=0"
+
+
+
+dash <- tbl(con,"DASH_ALL") %>%
+    filter(countyname == "Monterey",
+         #  rtype == "D",
+           #        indicator == "ela" | indicator == "math",
+           reportingyear == "2023") %>%
+    collect()  %>%
+    mutate(Group = case_match(studentgroup,
+                              "HOM" ~ "Homeless",
+                              "SWD" ~ "Students with \nDisabilities",
+                              "SED" ~ "Socio-Economically \nDisadvantaged",
+                              "HI" ~ "Latino",
+                              "EL" ~ "English \nLearner",
+                              "AS" ~ "Asian",
+                              "FI" ~ "Filipino",
+                              "WH" ~ "White",
+                              "ALL" ~ "All",
+                              "AA" ~ "Black/\nAfrican Am",
+                              "PI" ~ "Pacific Islander",
+                              "MR" ~ "Multiple \nRaces",
+                              .default = studentgroup
+    ))
+
+
+
+save.folder <- "mpusd"
