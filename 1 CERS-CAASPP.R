@@ -62,6 +62,7 @@ nmcusd.24 <- read_xlsx(here("data","nmcusd", "27738250000000_CAASPP_Student_Scor
  
  
  
+pg.24 <- read_csv(here("data","pg","2024_CAASPP_Student_Score_Data_File.csv")) 
  
 # 
 
@@ -477,9 +478,17 @@ reference2 <- reference2 %>%
 overall.graph <- function(df) {
     
     df %>% 
-        mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
-        ) %>%
-        ggplot( aes( y = Subject, fill = ScaleScoreAchievementLevel)) +
+        mutate(AchievementLevel = case_match(ScaleScoreAchievementLevel,
+                                             1 ~ "Not Met",
+                                             2 ~ "Nearly Met",
+                                             3 ~ "Met",
+                                             4 ~ "Exceeded"),
+               AchievementLevel = factor(AchievementLevel, levels = c("Not Met",
+                                                                  "Nearly Met",
+                                                                  "Met",
+                                                                  "Exceeded"))
+               ) %>%
+        ggplot( aes( y = Subject, fill = AchievementLevel)) +
         geom_bar(color = "black") +
         geom_text(    stat = "count",
                       aes(label = ..count..), 
@@ -490,19 +499,27 @@ overall.graph <- function(df) {
         labs(y = "",
              x = "",
              fill = "Achievement Level",
-             title = paste0(df[1,2],"\nCount of Students at each Achievement Level"))
+             title = paste0(df$CALPADSDistrictName[1],"\nCount of Students at each Achievement Level"))
 }
 
 
 nmcusd.24 %>%
-     filter(SWD == "Yes") %>%
-     graph.wrap()
+  #   filter(SWD == "Yes") %>%
+     graph.grid()
 
 # Graphs assessment results by grade
 graph.wrap <- function(df) {
    
 df %>% 
-    mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
+    mutate(AchievementLevel = case_match(ScaleScoreAchievementLevel,
+                                         1 ~ "Not Met",
+                                         2 ~ "Nearly Met",
+                                         3 ~ "Met",
+                                         4 ~ "Exceeded"),
+           AchievementLevel = factor(AchievementLevel, levels = c("Not Met",
+                                                                  "Nearly Met",
+                                                                  "Met",
+                                                                  "Exceeded")),
            GradeLevelWhenAssessed = factor(GradeLevelWhenAssessed, levels = c("KG",1,2,3,4,5,6,7,8,11)),
            AssessmentName = case_when(AssessmentName == "Kindergarten Summative ELPAC" ~ "Grade  KG Summative ELPAC",
                                       AssessmentName == "Grade 11 ELA Summative" ~ "Grade11 ELA Summative",
@@ -512,7 +529,7 @@ df %>%
                                       AssessmentName == "Grade 12 Summative ELPAC" ~ "Grade12 Summative ELPAC",
                                       TRUE ~AssessmentName)
     ) %>%
-    ggplot( aes( y = AssessmentName, fill = ScaleScoreAchievementLevel)) +
+    ggplot( aes( y = AssessmentName, fill = AchievementLevel)) +
     geom_bar(color = "black") +
     facet_wrap(vars(Subject),
                # vars(GradeLevelWhenAssessed),
@@ -527,7 +544,7 @@ df %>%
     labs(y = "",
          x = "",
          fill = "Achievement Level",
-         title = paste0(df[1,2],"\nCount of Students at each Achievement Level"))
+         title = paste0(df$CALPADSDistrictName[1],"\nCount of Students at each Achievement Level"))
 
 }
 
@@ -535,7 +552,15 @@ df %>%
 graph.grid <- function(df) {
     
     df %>% 
-        mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
+        mutate(AchievementLevel = case_match(ScaleScoreAchievementLevel,
+                                             1 ~ "Not Met",
+                                             2 ~ "Nearly Met",
+                                             3 ~ "Met",
+                                             4 ~ "Exceeded"),
+               AchievementLevel = factor(AchievementLevel, levels = c("Not Met",
+                                                                      "Nearly Met",
+                                                                      "Met",
+                                                                      "Exceeded")),
                GradeLevelWhenAssessed2 = factor(GradeLevelWhenAssessed, levels = c("KG",1,2,3,4,5,6,7,8,11)),
                AssessmentName = case_when(AssessmentName == "Kindergarten Summative ELPAC" ~ "Grade  KG Summative ELPAC",
                                           AssessmentName == "Grade 11 ELA Summative" ~ "Grade11 ELA Summative",
@@ -545,7 +570,7 @@ graph.grid <- function(df) {
                                           AssessmentName == "Grade 12 Summative ELPAC" ~ "Grade12 Summative ELPAC",
                                           TRUE ~AssessmentName)
         ) %>%
-        ggplot( aes( y = AssessmentName, fill = ScaleScoreAchievementLevel)) +
+        ggplot( aes( y = AssessmentName, fill = AchievementLevel)) +
         geom_bar(color = "black") +
         facet_grid(vars(Subject),
                    vars(GradeLevelWhenAssessed),
@@ -559,38 +584,38 @@ graph.grid <- function(df) {
         labs(y = "",
              x = "",
              fill = "Achievement Level",
-             title = paste0(df[1,2],"\nCount of Students at each Achievement Level"))
+             title = paste0(df$CALPADSDistrictName[1],"\nCount of Students at each Achievement Level"))
     
 }
 
 # Saves the wrap graph
 save.wrap <- function(df) {
     
-    print(df[1,2])
+    print(df$CALPADSDistrictName[1])
     
     graph.wrap(df)
     
-    ggsave(here("output",paste0(df[1,2], " wrap ", Sys.Date(),".png")), width = 12, height = 7)
+    ggsave(here("output",save.folder,paste0(df$CALPADSDistrictName[1], " wrap ", Sys.Date(),".png")), width = 12, height = 7)
 }
 
 # Saves the grid graph
 save.grid <- function(df) {
     
-    print(df[1,2])
+    print(df$CALPADSDistrictName[1])
     
     graph.grid(df)
     
-    ggsave(here("output",paste0(df[1,2], " grid ", Sys.Date(),".png")), width = 12, height = 7)
+    ggsave(here("output",save.folder,paste0(df$CALPADSDistrictName[1], " grid ", Sys.Date(),".png")), width = 12, height = 7)
 }
 
 # Saves the overall graph
 save.overall <- function(df) {
     
-    print(df[1,2])
+    print(df$CALPADSDistrictName[1])
     
     overall.graph(df)
     
-    ggsave(here("output",paste0(df[1,2], " overall ", Sys.Date(),".png")), width = 8, height = 7)
+    ggsave(here("output",save.folder,paste0(df$CALPADSDistrictName[1], " overall ", Sys.Date(),".png")), width = 8, height = 7)
 }
 
 

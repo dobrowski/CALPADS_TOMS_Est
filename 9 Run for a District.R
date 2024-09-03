@@ -1,11 +1,11 @@
 
 
-### Load files ------
-
 
 # Set district name for folder to same images 
-save.folder <- "nmcusd"
+save.folder <- "soledad"
 
+
+### Load files ------
 
 # Load TOMS CAASPP results 
 nmcusd.24 <- read_xlsx(here("data","nmcusd", "27738250000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
@@ -18,6 +18,52 @@ spreck.24 <- read_xlsx(here("data","spreckels", "27662250000000_CAASPP_Student_S
 spreck.24 <- use.TOMS(spreck.24)
 
 
+mcoe.24 <- read_xlsx(here("data","mcoe", "27102720000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                       skip = 1)
+mcoe.24 <- mcoe.24 %>%
+    filter(!str_detect(CALPADSSchoolName,"Special"),
+           !str_detect(CALPADSSchoolName,"Home")) %>%
+    use.TOMS()
+
+
+
+sanardo.24 <- read_xlsx(here("data","san ardo", "27661750000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                     skip = 1) %>%
+    use.TOMS()
+
+
+mission.24 <- read_xlsx(here("data","mission", "27660840000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                        skip = 1) %>%
+    use.TOMS()
+
+
+pg.24 <- read_xlsx(here("data","pg", "27661340000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                        skip = 1) %>%
+    use.TOMS()
+
+
+
+lagunita.24 <- read_xlsx(here("data","lagunita", "27660760000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                   skip = 1) %>%
+    use.TOMS()
+
+
+
+kingcity.24 <- read_xlsx(here("data","king city", "27660500000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                         skip = 1) %>%
+    use.TOMS()
+
+
+sanantonio.24 <- read_xlsx(here("data","san antonio", "27661670000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                         skip = 1) %>%
+    use.TOMS()
+
+greenfield.24 <- read_xlsx(here("data","greenfield", "27660350000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                           skip = 1) %>%
+    use.TOMS()
+
+
+
 
 
 # Load TOMS ELPAC results 
@@ -27,6 +73,10 @@ nmcusd.elpac.24 <- read_xlsx(here("data","nmcusd","27738250000000_Summative_ELPA
 
 kingcity.elpac.24 <- read_xlsx(here("data","king city","27660500000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
                              skip = 1
+)
+
+greenfield.elpac.24 <- read_xlsx(here("data","greenfield","27660350000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                               skip = 1
 )
 
 
@@ -49,45 +99,82 @@ nmcusd.demo.24 <- read_csv(here("data", "nmcusd" , "8.1_StudentProfileList(EOY3)
 nmcusd.sus.24 <- read_csv(here("data", "nmcusd" , "7.12_IncidentResultsStudentList.csv"))
 
 
-graph.wrap(spreck.24)
-
-graph.grid(spreck.24)
-
-save.overall(spreck.24)
-save.wrap(spreck.24)
-save.grid(spreck.24)
+sanardo.abs.24 <- read_csv(here("data", "san ardo" , "14.2_StudentAbsencesStudentList.csv"))
+sanardo.demo.24 <- read_csv(here("data", "san ardo" , "8.1_StudentProfileList(EOY3).csv"))
+sanardo.sus.24 <- read_csv(here("data", "san ardo" , "7.12_IncidentResultsStudentList.csv"))
 
 
-passing.perc(spreck.24)
-
-dfs(spreck.24)
-
-student.group.size(spreck.24, limit.30 = FALSE) %>% print(n = 30)
-
-
-# pme2(spreck.24,HOM)
-pme2(spreck.24,SWD)
-pme2(spreck.24,SED)
-pme2(spreck.24,ELdash)
-pme2(spreck.24,HispanicOrLatinoEthnicity)
-pme2(spreck.24,White)
-pme2(spreck.24,TwoorMoreRaces)
+mcoe.abs.24 <- read_csv(here("data", "mcoe" , "14.2.csv"))
+mcoe.demo.24 <- read_csv(here("data", "mcoe" , "8.1.csv"))
+mcoe.sus.24 <- read_csv(here("data", "mcoe" , "7.12.csv"))
+mcoe.grad.24 <- read_csv(here("data", "mcoe" , "15.2.csv"))
+mcoe.5th.grad.24 <- read_csv(here("data", "mcoe" , "1.23_GraduatesandCompletersStudentList.csv"))
+mcoe.2023.grad.24 <- read_csv(here("data", "mcoe" , "15.2 - Cohort Outcome - Student Details (2023).csv"))
 
 
-dfs2(spreck.24,White) 
-dfs2(spreck.24,ELdash) 
-# dfs2(nmcusd.24,Asian)
-#  dfs2(nmcusd.24,MigrantStatus) 
-# dfs2(nmcusd.24,Filipino) 
- dfs2(spreck.24,TwoorMoreRaces) 
-# dfs2(nmcusd.24,BlackorAfricanAmerican) 
-# dfs2(nmcusd.24,HawaiianOrOtherPacificIslander) 
-dfs2(spreck.24,HispanicOrLatinoEthnicity) 
-#   dfs2(nmcusd.24,SpecialEducationforTesting) 
-#   dfs2(nmcusd.24,EconomicDisadvantageTesting) 
-dfs2(spreck.24 ,SED) 
-# dfs2(spreck.24,HOM) 
-dfs2(spreck.24,SWD) 
+
+
+sanantonio.abs.24 <- read_csv(here("data", "san antonio" , "S_14.2_StudentAbsencesStudentList.csv"))
+sanantonio.demo.24 <- read_csv(here("data", "san antonio" , "S_8.1_StudentProfileList(EOY3).csv"))
+sanantonio.sus.24 <- read_csv(here("data", "san ardo" , "7.12_IncidentResultsStudentList.csv"))
+
+
+greenfield.abs.24 <- read_csv(here("data", "greenfield" , "14.2 StudentAbsencesStudentList.csv"))
+greenfield.demo.24 <- read_csv(here("data", "greenfield" , "8.1_StudentProfileList(EOY3).csv"))
+greenfield.sus.24 <- read_csv(here("data", "greenfield" , "7.12 IncidentResultsStudentList.csv"))
+
+
+soledad.abs.24 <- read_csv(here("data", "soledad" , "14.2_StudentAbsencesStudentList.csv"))
+soledad.demo.24 <- read_csv(here("data", "soledad" , "8.1_StudentProfileList(EOY3).csv"))
+soledad.sus.24 <- read_csv(here("data", "soledad" , "7.12_IncidentResultsStudentList.csv"))
+
+
+
+
+
+#### CAASPP Analysis ----
+
+
+graph.wrap(greenfield.24)
+
+graph.grid(greenfield.24)
+
+save.overall(greenfield.24)
+save.wrap(greenfield.24)
+save.grid(greenfield.24)
+
+
+passing.perc(greenfield.24)
+
+dfs(greenfield.24)
+
+student.group.size(greenfield.24, limit.30 = TRUE) %>% print(n = 30)
+
+
+ pme2(greenfield.24,HOM)
+ pme2(greenfield.24,SWD)
+ pme2(greenfield.24,SED)
+ pme2(greenfield.24,ELdash)
+pme2(greenfield.24,HispanicOrLatinoEthnicity)
+# pme2(pg.24,Asian)
+# pme2(greenfield.24,White)
+#  pme2(pg.24,TwoorMoreRaces)
+
+
+# dfs2(sanantonio.24,White)
+dfs2(greenfield.24,ELdash)
+#dfs2(sanardo.24,Asian)
+# dfs2(nmcusd.24,MigrantStatus)
+# dfs2(nmcusd.24,Filipino)
+#dfs2(sanardo.24,TwoorMoreRaces)
+# dfs2(nmcusd.24,BlackorAfricanAmerican)
+# dfs2(nmcusd.24,HawaiianOrOtherPacificIslander)
+dfs2(greenfield.24,HispanicOrLatinoEthnicity)
+#  dfs2(nmcusd.24,SpecialEducationforTesting)
+#  dfs2(nmcusd.24,EconomicDisadvantageTesting)
+dfs2(greenfield.24 ,SED)
+ dfs2(greenfield.24,HOM)
+dfs2(greenfield.24,SWD)
 
 
 
@@ -118,33 +205,35 @@ working <- working %>%
 
 
 
-dfs.graph(dist = "mpusd.24",
+dfs.graph(dist = "greenfield.24",
           assessment = "ELA",
-          dist.name = "Monterey Peninsula")
+          dist.name = "Greenfield")
 
 
-dfs.graph(dist = "mpusd.24",
+dfs.graph(dist = "greenfield.24",
           assessment = "Math",
-          dist.name = "Monterey Peninsula")
+          dist.name = "Greenfield")
 
 
 
-dfs.comp(dist = "mpusd.24",
+dfs.comp(dist = "greenfield.24",
          assessment = "ELA",
-         dist.name = "Monterey Peninsula")
+         dist.name = "Greenfield", 
+old.colors = FALSE)
 
 
-dfs.comp(dist = "mpusd.24",
+dfs.comp(dist = "greenfield.24",
          assessment = "Math",
-         dist.name = "Monterey Peninsula")
+         dist.name = "Greenfield",
+old.colors = FALSE)
 
 
 
 
 
 
-school.split <-  spreck.24  %>%
-    filter(str_detect(CALPADSDistrictName,"Spreckels")) 
+school.split <-  greenfield.24  %>%
+    filter(str_detect(CALPADSDistrictName,"Greenfield")) 
 
 school.split %>%
     split(school.split$CALPADSSchoolName) %>%
@@ -177,16 +266,16 @@ school.list <- holder$CDS %>% unique()
 
 for (i in 1:length(school.list)) {
     
-    math.df <- dfs.comp.school(df = holder, cds = school.list[i], assessment = "Math", limit.case.count = TRUE) 
+    math.df <- dfs.comp.school(df = holder, cds = school.list[i], assessment = "Math", limit.case.count = TRUE, old.colors = FALSE) 
     
-    dfs.comp.school.graph(math.df)
+    dfs.comp.school.graph(math.df, old.colors = FALSE)
     dfs.school.graph(math.df)
 
     #   ggsave(here("output",save.folder ,paste0(school.list[i], " - ","Math"," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
     
-    ela.df <-   dfs.comp.school(df = holder, cds = school.list[i], assessment = "ELA", limit.case.count = TRUE) 
+    ela.df <-   dfs.comp.school(df = holder, cds = school.list[i], assessment = "ELA", limit.case.count = TRUE, old.colors = FALSE) 
     
-    dfs.comp.school.graph(ela.df)
+    dfs.comp.school.graph(ela.df, old.colors = FALSE)
     dfs.school.graph(ela.df)
 
     #   ggsave(here("output",save.folder ,paste0(school.list[i], " - ","ELA"," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
@@ -198,16 +287,16 @@ for (i in 1:length(school.list)) {
 
 
 
-elpi.calc(kingcity.elpac.24 #%>%
+elpi.calc(greenfield.elpac.24 #%>%
           #   filter(str_detect(TestedSchoolName1,"Prune"))
           , "D"
 )
 
 
-school.list <- unique(kingcity.elpac.24$TestedSchoolName1)
+school.list <- unique(greenfield.elpac.24$TestedSchoolName1)
 
 for (i in school.list) {
-    elpi.calc(kingcity.elpac.24%>%
+    elpi.calc(greenfield.elpac.24%>%
                   filter(str_detect(TestedSchoolName1,i)),
               "S"
     )
@@ -220,14 +309,14 @@ for (i in school.list) {
 
 
 
-mpusd.abs.joint <- calpads.join(mpusd.abs.24, mpusd.demo.24)
+soledad.abs.joint <- calpads.join(soledad.abs.24, soledad.demo.24)
 
-chronic.group.rate(mpusd.abs.joint, EthnicityRace)
-chronic.group.rate(mpusd.abs.joint, Homeless)
-chronic.group.rate(mpusd.abs.joint, StudentswithDisabilities)
-chronic.group.rate(mpusd.abs.joint, EnglishLearner)
-chronic.group.rate(mpusd.abs.joint, SocioEconomicallyDisadvantaged)
-chronic.group.rate(mpusd.abs.joint, All)
+chronic.group.rate(soledad.abs.joint, EthnicityRace)
+chronic.group.rate(soledad.abs.joint, Homeless)
+chronic.group.rate(soledad.abs.joint, StudentswithDisabilities)
+chronic.group.rate(soledad.abs.joint, EnglishLearner)
+chronic.group.rate(soledad.abs.joint, SocioEconomicallyDisadvantaged)
+chronic.group.rate(soledad.abs.joint, All)
 
 
 
@@ -241,14 +330,14 @@ chronic.group.rate(spreck.abs.joint, SocioEconomicallyDisadvantaged)
 chronic.group.rate(spreck.abs.joint, All)
 
 
-nmcusd.abs.joint <- calpads.join(nmcusd.abs.24, nmcusd.demo.24)
+mcoe.abs.joint <- calpads.join(mcoe.abs.24, mcoe.demo.24, grade.filt = FALSE)
 
-chronic.group.rate(nmcusd.abs.joint, EthnicityRace)
-chronic.group.rate(nmcusd.abs.joint, Homeless)
-chronic.group.rate(nmcusd.abs.joint, StudentswithDisabilities)
-chronic.group.rate(nmcusd.abs.joint, EnglishLearner)
-chronic.group.rate(nmcusd.abs.joint, SocioEconomicallyDisadvantaged)
-chronic.group.rate(nmcusd.abs.joint, All)
+chronic.group.rate(mcoe.abs.joint, EthnicityRace)
+chronic.group.rate(mcoe.abs.joint, Homeless)
+chronic.group.rate(mcoe.abs.joint, StudentswithDisabilities)
+chronic.group.rate(mcoe.abs.joint, EnglishLearner)
+chronic.group.rate(mcoe.abs.joint, SocioEconomicallyDisadvantaged)
+chronic.group.rate(mcoe.abs.joint, All)
 
 
 
@@ -273,22 +362,22 @@ working <- read_sheet(ss = sheet,
 
 
 chronic.dash.graph(
-    dist = "nmcusd.abs.joint",
-    dist.name = "North Monterey County")
+    dist = "soledad.abs.joint",
+    dist.name = "Soledad")
 
 
 chronic.dash.comp(
-    dist = "nmcusd.abs.joint",
-    dist.name = "North Monterey County")
+    dist = "soledad.abs.joint",
+    dist.name = "Soledad")
 
 
 
 
-nmcusd.abs.school.joint <- chr.joint.school(nmcusd.abs.24, nmcusd.demo.24)
+soledad.abs.school.joint <- chr.joint.school(soledad.abs.24, soledad.demo.24, grade.filt = TRUE)
 
 
 
-holder <- nmcusd.abs.school.joint %>%
+holder <- soledad.abs.school.joint %>%
     # filter(str_detect(DistrictName,dist.name)) %>%
     split(.$SchoolName) %>%
     map_df(~add.school.car(.))  %>%
@@ -305,20 +394,20 @@ holder <- nmcusd.abs.school.joint %>%
                               .default = students
     ))
 
-chron.all.schools(nmcusd.abs.school.joint , dist.cd = 73825)
+chron.all.schools(soledad.abs.school.joint , dist.cd = 75440, limit.case.cnt = TRUE)
 
 
 #### Suspension -----
 
 
-nmcusd.sus.joint <- susp.df(nmcusd.sus.24,nmcusd.demo.24 )
+soledad.sus.joint <- susp.df(soledad.sus.24,soledad.demo.24 )
 
-susp.group.rate(nmcusd.sus.joint, EthnicityRace)
-susp.group.rate(nmcusd.sus.joint, Homeless)
-susp.group.rate(nmcusd.sus.joint, StudentswithDisabilities)
-susp.group.rate(nmcusd.sus.joint, EnglishLearner)
-susp.group.rate(nmcusd.sus.joint, SocioEconomicallyDisadvantaged)
-susp.group.rate(nmcusd.sus.joint, All)
+susp.group.rate(soledad.sus.joint, EthnicityRace)
+susp.group.rate(soledad.sus.joint, Homeless)
+susp.group.rate(soledad.sus.joint, StudentswithDisabilities)
+susp.group.rate(soledad.sus.joint, EnglishLearner)
+susp.group.rate(soledad.sus.joint, SocioEconomicallyDisadvantaged)
+susp.group.rate(soledad.sus.joint, All)
 
 
 
@@ -342,46 +431,29 @@ working <- read_sheet(ss = sheet,
 
 
 susp.dash.graph(
-    dist = "nmcusd.sus.joint",
-    dist.name = "North Monterey County")
+    dist = "soledad.sus.joint",
+    dist.name = "Soledad")
 
 
 susp.dash.comp(
-    dist = "nmcusd.sus.joint",
-    dist.name = "North Monterey County")
+    dist = "soledad.sus.joint",
+    dist.name = "Soledad")
 
 
 
-nmcusd.sus.school.joint <- susp.joint.school(nmcusd.sus.24, nmcusd.demo.24)
+soledad.sus.school.joint <- susp.joint.school(soledad.sus.24, soledad.demo.24)
 
 
-nmcusd.sus.school.joint %>% 
-    filter(str_detect(SchoolName,"Los Arboles"),
-           # Grade %in% c("KN","1","2"),
-           # StudentswithDisabilities == "Yes"
-    ) %>%
-    add.school.susp()
-
-# 
-# holder <- mpusd.sus.school.joint %>%
-#     # filter(str_detect(DistrictName,dist.name)) %>%
-#     split(.$SchoolName) %>%
-#     map_df(~add.school.susp(.))  %>%
-#     mutate(Group = case_match(students,
-#                               "All" ~ "All",
-#                               "Homeless" ~ "Homeless",
-#                               "StudentswithDisabilities" ~ "Students with \nDisabilities",
-#                               "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
-#                               "Hispanic" ~ "Latino",
-#                               "EnglishLearner" ~ "English \nLearner",
-#                               "Black/African Am" ~ "Black/\nAfrican Am",
-#                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
-#                               "Multiple" ~ "Multiple \nRaces",
-#                               .default = students
-#     ))
+# soledad.sus.school.joint %>% 
+#     filter(str_detect(SchoolName,"Soledad"),
+#            # Grade %in% c("KN","1","2"),
+#            # StudentswithDisabilities == "Yes"
+#     ) %>%
+#     add.school.susp()
 
 
 
-nmcusd.sus.school.joint %>%
+
+soledad.sus.school.joint %>%
  #   filter(!str_detect(SchoolName, "Monterey Peninsula Unified")) %>%
-    susp.all.schools(dist.cd = 73825)
+    susp.all.schools(dist.cd = 75440, limit.case.cnt = TRUE )

@@ -8,39 +8,20 @@ mpusd.abs.24 <- read_csv(here("data", "mpusd" , "14.2_StudentAbsencesStudentList
 mpusd.demo.24 <- read_csv(here("data", "mpusd" , "8.1_StudentProfileList(EOY3).InReviewUncertified_20240715.csv"))
 
 
-# 
-# ausd.calpads <- read_xlsx(here("data", "alisal" , "14.2_StudentAbsencesStudentList.xlsx"))
-# ausd.calpads.demo <- read_xlsx(here("data", "alisal" , "8.1_StudentProfileList(EOY3).xlsx"))
-# 
-# scesd.calpads <- read_csv(here("data", "scesd" , "14.2_StudentAbsencesStudentList.csv"))
-# scesd.calpads.demo <- read_csv(here("data", "scesd" , "8.1_StudentProfileList(EOY3).csv"))
-# 
-# nmcusd.calpads <- read_csv(here("data", "nmcusd" , "14.2_StudentAbsencesStudentList.csv"))
-# nmcusd.calpads.demo <- read_csv(here("data", "nmcusd" , "8.1_StudentProfileList(EOY3).csv"))
-# 
-# soledad.calpads <- read_csv(here("data", "soledad" , "14.2_StudentAbsencesStudentList.csv"))
-# soledad.calpads.demo <- read_csv(here("data", "soledad" , "8.1_StudentProfileList(EOY3).csv"))
-# 
-# spreckels.calpads <- read_xlsx(here("data", "spreckels" , "14.2_StudentAbsencesStudentList.xlsx"),
-#                                range = "G9:AE950") %>%
-#     janitor::clean_names("upper_camel") %>%
-#     rename(SSID = Ssid) %>%
-#     mutate(AdaGeneratingIndependentStudyDays = as.numeric(AdaGeneratingIndependentStudyDays))
-# spreckels.calpads.demo <- read_xlsx(here("data", "spreckels" , "8.1_StudentProfileList(EOY3).xlsx"),
-#                                     range = "G10:AT968")%>%
-#     janitor::clean_names("upper_camel") %>%
-#     rename(SSID = Ssid) %>%
-#     mutate(StudentswithDisabilities = StudentsWithDisabilities)
-
 
 ### Functions ----
 
-calpads.join <- function(df, df.demo) {
+calpads.join <- function(df, df.demo, grade.filt = TRUE) {
     
     
     df.calpads2 <- df %>%
+        mutate(keeper = case_when(grade.filt == FALSE ~ TRUE, 
+                                  Grade %in% c("TK","KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   ) ~ TRUE,  
+                                  TRUE ~ FALSE)
+  ) %>%
         filter(DaysExpectedA >= 1,
-               Grade %in% c("TK","KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   )
+               keeper == TRUE
+             #  Grade %in% c("TK","KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   )
                ) %>%
         group_by(SSID, StudentName ) %>% #, Ethnicity, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
         summarise(across(.cols =   c(DaysExpectedA:DaysAbsentCEFG),
@@ -107,59 +88,6 @@ chronic.group.rate(mpusd.abs.joint, All)
 
 
 
-# scesd.calpads.joint <- calpads.join(scesd.calpads, scesd.calpads.demo)
-# 
-# chronic.group.rate(scesd.calpads.joint, EthnicityRace)
-# chronic.group.rate(scesd.calpads.joint, Homeless)
-# chronic.group.rate(scesd.calpads.joint, StudentswithDisabilities)
-# chronic.group.rate(scesd.calpads.joint, EnglishLearner)
-# chronic.group.rate(scesd.calpads.joint, SocioEconomicallyDisadvantaged)
-# chronic.group.rate(scesd.calpads.joint, All)
-# 
-# 
-# 
-# nmcusd.calpads.joint <- calpads.join(nmcusd.calpads, nmcusd.calpads.demo)
-# 
-# chronic.group.rate(nmcusd.calpads.joint, EthnicityRace)
-# chronic.group.rate(nmcusd.calpads.joint, Homeless)
-# chronic.group.rate(nmcusd.calpads.joint, StudentswithDisabilities)
-# chronic.group.rate(nmcusd.calpads.joint, EnglishLearner)
-# chronic.group.rate(nmcusd.calpads.joint, SocioEconomicallyDisadvantaged)
-# chronic.group.rate(nmcusd.calpads.joint, All)
-# 
-# 
-# nmcusd.calpads.joint %>%
-#     mutate(All = "Y") %>%
-#     chronic.group.rate(All)
-# 
-# 
-# temp <- nmcusd.calpads %>%
-#     mutate(AbsenceRate2 = 100*DaysAbsentCEFG/DaysExpectedA,
-#            chronic = if_else(AbsenceRate2 >= 10, TRUE, FALSE),
-#            dupes = duplicated(SSID))
-# 
-# mean(temp$chronic, na.rm = TRUE)
-# 
-# 
-# soledad.calpads.joint <- calpads.join(soledad.calpads, soledad.calpads.demo)
-# 
-# chronic.group.rate(soledad.calpads.joint, EthnicityRace)
-# chronic.group.rate(soledad.calpads.joint, Homeless)
-# chronic.group.rate(soledad.calpads.joint, StudentswithDisabilities)
-# chronic.group.rate(soledad.calpads.joint, EnglishLearner)
-# chronic.group.rate(soledad.calpads.joint, SocioEconomicallyDisadvantaged)
-# chronic.group.rate(soledad.calpads.joint, All)
-# 
-# 
-# spreckels.calpads.joint <- calpads.join(spreckels.calpads, spreckels.calpads.demo)
-# 
-# chronic.group.rate(spreckels.calpads.joint, EthnicityRace)
-# chronic.group.rate(spreckels.calpads.joint, Homeless)
-# chronic.group.rate(spreckels.calpads.joint, StudentswithDisabilities)
-# chronic.group.rate(spreckels.calpads.joint, EnglishLearner)
-# chronic.group.rate(spreckels.calpads.joint, SocioEconomicallyDisadvantaged)
-
-
 ### Graphing Single Year -----
 
 
@@ -218,18 +146,6 @@ working <- read_sheet(ss = sheet,
 chronic.dash.graph(dist = "mpusd.abs.joint",
           dist.name = "Monterey Peninsula")
 
-# chronic.dash.graph(dist = "scesd.calpads.joint",
-#                    dist.name = "Salinas City")
-# 
-# chronic.dash.graph(dist = "nmcusd.calpads.joint",
-#                    dist.name = "North Monterey County")
-# 
-# chronic.dash.graph(dist = "soledad.calpads.joint",
-#                    dist.name = "Soledad")
-# 
-# 
-# chronic.dash.graph(dist = "spreckels.calpads.joint",
-#                    dist.name = "Spreckels")
 
 
 ### Comparison to prior year ----
@@ -299,31 +215,23 @@ df %>%
 chronic.dash.comp(dist = "mpusd.abs.joint",
                   dist.name = "Monterey Peninsula")
 
-# chronic.dash.comp(dist = "scesd.calpads.joint",
-#                    dist.name = "Salinas City")
-# 
-# chronic.dash.comp(dist = "nmcusd.calpads.joint",
-#                   dist.name = "North Monterey County")
-# 
-# chronic.dash.comp(dist = "soledad.calpads.joint",
-#                    dist.name = "Soledad")
-# 
-# 
-# chronic.dash.comp(dist = "spreckels.calpads.joint",
-#     dist.name = "Spreckels")
-
 
 
 
 ### School Graphs ----
 
 
-chr.joint.school <- function(df, df.demo, dist.name) {
+chr.joint.school <- function(df, df.demo, dist.name, grade.filt = TRUE) {
     
-
+    
     df.calpads2 <- df %>%
+        mutate(keeper = case_when(grade.filt == FALSE ~ TRUE, 
+                                  Grade %in% c("TK","KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   ) ~ TRUE,  
+                                  TRUE ~ FALSE)
+        ) %>%
         filter(DaysExpectedA >= 1,
-               Grade %in% c("KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   )
+               keeper == TRUE
+               #  Grade %in% c("TK","KN",1,2,3,4,5,6,7,8,  "01","02","03","04","05","06","07","08" ,  "1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0"   )
         ) %>%
         group_by(SSID, StudentName, SchoolName, SchoolCode, Grade) %>% #, Ethnicity, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
         summarise(across(.cols =   c(DaysExpectedA:DaysAbsentCEFG),
@@ -399,7 +307,7 @@ add.school.car <- function(df) {
         bind_rows(  car.school(df,EnglishLearner) ) %>%
         bind_rows( car.school(df,Asian) )  %>%
         bind_rows( car.school(df,Filipino) )  %>%
-        bind_rows( car.school(df,Multiple) )  %>%
+    #    bind_rows( car.school(df,Multiple) )  %>%
     #    bind_rows( car.school(df,`Black/African Am`) )  %>%
         bind_rows( car.school(df,`Am Indian/Alskn Nat`) )  %>%
    #     bind_rows( car.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
@@ -428,29 +336,10 @@ mpusd.abs.school.joint %>%
 
 
 
-spreck.abs.school.joint %>%
-    filter(str_detect(SchoolName,"Buena"),
+mcoe.abs.school.joint %>%
+    filter(str_detect(SchoolName,"Well"),
     ) %>%
     add.school.car()
-
-
-
-
-
-# nmcusd.calpads.school.joint %>% 
-#     filter(str_detect(SchoolName,"Elkhorn"),
-#            Grade %in% c("KN","1","2"),
-#            StudentswithDisabilities == "Yes"
-#            ) %>%
-#     add.school.car()
-# 
-# 
-# soledad.calpads.school.joint %>% 
-#     filter(str_detect(SchoolName,"Main"),
-#            Grade %in% c("07", "7"),
-#            StudentswithDisabilities == "Yes"
-#     ) %>%
-#     add.school.car()
 
 
 
@@ -490,7 +379,7 @@ chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRU
     work.group <-   df %>%
         filter(SchoolCode == school.code #| SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         ) %>%
-        filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
+        filter(if(limit.case.count == TRUE )count >= 30 else count >= 10) %>%
         ungroup() %>%
         select(Group) %>%
         unique() %>%
@@ -512,7 +401,7 @@ chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRU
     df %>%
         filter(SchoolCode == school.code # | SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         ) %>%
-        filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
+        filter(if(limit.case.count == TRUE )count >= 30 else count >= 10) %>%
   #      mutate(DFS = as.numeric(DFS)) %>%
         left_join(dash2, by = c("Group")) %>%
         mutate(change = chronic.rate.x - chronic.rate.y,
@@ -641,7 +530,7 @@ chron.comp.school(holder, dist.code = 66092, school.code = 6026181, limit.case.c
 
 
 
-chron.all.schools <- function(df, dist.cd) {
+chron.all.schools <- function(df, dist.cd, limit.case.cnt = TRUE) {
     
 
 holder <- df %>%
@@ -666,7 +555,7 @@ school.list <- holder$SchoolCode %>% unique()
 
 for (i in 1:length(school.list)) {
     
-chron.df <- chron.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = TRUE) 
+chron.df <- chron.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt) 
 
 chron.comp.school.graph(chron.df)
 chron.school.graph(chron.df)
@@ -687,6 +576,137 @@ chron.all.schools(mpusd.abs.school.joint , dist.cd = 66092)
 
 
 ### High Schools -----
+
+
+
+chr.hs.joint.school <- function(df, df.demo, dist.name) {
+    
+    
+    df.calpads2 <- df %>%
+        filter(DaysExpectedA >= 1,
+               Grade %in% c( 9, 10, 11, 12,  "09","10","11","12"   )
+        ) %>%
+        group_by(SSID, StudentName, SchoolName, SchoolCode, Grade) %>% #, Ethnicity, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
+        summarise(across(.cols =   c(DaysExpectedA:DaysAbsentCEFG),
+                         ~ sum(.x, na.rm = TRUE)
+        )
+        ) %>%
+        filter(DaysExpectedA >= 31) %>%
+        mutate(AbsenceRate2 = 100*DaysAbsentCEFG/DaysExpectedA,
+               chronic = if_else(AbsenceRate2 >= 10, TRUE, FALSE),
+               dupes = duplicated(SSID))
+    
+    
+    df.calpads.demo2 <- df.demo %>%
+        select(SSID, EthnicityRace, Homeless, StudentswithDisabilities, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
+        distinct() %>%
+        group_by(SSID) %>%
+        mutate(Homeless = if_else(any(Homeless == "Y"), "Yes", "N" ),
+               StudentswithDisabilities = if_else(any(StudentswithDisabilities == "Y"), "Yes", "N" ),
+               EnglishLearner = if_else(any(EnglishLearner == "Y"), "Yes", "N" ),
+               SocioEconomicallyDisadvantaged = if_else(any(SocioEconomicallyDisadvantaged == "Y"), "Yes", "N" ),
+        ) %>%
+        distinct()  %>%
+        mutate(All = "Yes") %>%
+        pivot_wider(names_from = EthnicityRace, values_from = All) %>%
+        mutate(All = "Yes")
+    
+    joint <- df.calpads2 %>%
+        left_join(df.calpads.demo2)
+    
+    joint
+    
+    
+}
+
+
+nmcusd.hs.abs.joint <- chr.hs.joint.school(nmcusd.abs.24, nmcusd.demo.24)
+
+
+
+
+chron.hs.schools <- function(df) {
+    
+    
+    holder <- df %>%
+        # filter(str_detect(DistrictName,dist.name)) %>%
+        split(.$SchoolName) %>%
+        map_df(~add.school.car(.))  %>%
+        mutate(Group = case_match(students,
+                                  "All" ~ "All",
+                                  "Homeless" ~ "Homeless",
+                                  "StudentswithDisabilities" ~ "Students with \nDisabilities",
+                                  "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
+                                  "Hispanic" ~ "Latino",
+                                  "EnglishLearner" ~ "English \nLearner",
+                                  "Black/African Am" ~ "Black/\nAfrican Am",
+                                  "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
+                                  "Multiple" ~ "Multiple \nRaces",
+                                  .default = students
+        ))
+    
+    
+    school.list <- holder$SchoolCode %>% unique()
+    
+    print(school.list)
+    
+    for (i in 1:length(school.list)) {
+        
+        chron.df <- holder %>% 
+            filter(SchoolCode == school.list[i]) 
+        
+        print(chron.df)
+ 
+        skul <- chron.df$SchoolName[1]
+
+        chron.df %>%
+            ggplot(aes(x = Group, y = chronic.rate)) +
+            geom_col(aes(fill = "pink",
+                         color = "black"),
+                     position = "dodge2")  +
+            scale_x_discrete(guide = guide_axis(n.dodge = 2)) + #Fixes the overlapping axis labels to make them alternate if lots of columns
+
+            mcoe_theme +
+            scale_fill_identity() +
+            scale_color_identity() +
+            labs(y = "Chronic Absenteeism Rate",
+                 title = paste0(skul, " - Chronic Absenteeism Student Group Estimates 2024"),
+                 # subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color"
+            )
+
+
+        ggsave(here("output",save.folder ,paste0(skul," Chronic Estimates 2024 ", Sys.Date(),".png")), width = 8, height = 5)
+        
+
+    }
+    
+    
+}
+
+chron.hs.schools(nmcusd.hs.abs.joint)
+
+
+nmcusd.hs.abs.joint %>%
+    filter(str_detect(SchoolName, "North Monterey County High")) %>% 
+    chron.hs.schools()
+
+
+
+
+
+
+
+
+chron.school.graph <- function(df) {
+    
+    
+} 
+
+
+
+
+
+
 
 
 

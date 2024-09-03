@@ -97,7 +97,7 @@ caaspp.mry2 <- caaspp.mry %>%
 
 
 
-dfs.comp <- function(dist, assessment = "ELA", dist.name , limit.case.count = TRUE) {
+dfs.comp <- function(dist, assessment = "ELA", dist.name , limit.case.count = TRUE, old.colors = FALSE) {
     
     
 work.group <-   working %>%
@@ -115,33 +115,52 @@ work.group <-   working %>%
                indicator == ass2,
                Group %in% work.group
                              ) %>%
-        select(districtname, indicator, currstatus, Group) %>%
-        mutate(EstimatedColor = "Light Gray") %>%
-        rename(DFS = currstatus)
+        select(districtname, indicator, currstatus, color ,Group) %>%
+        mutate( EstimatedColor = case_when(old.colors == FALSE ~ "Light Gray",
+                                           color == 1 ~ "Red",
+                                           color == 2 ~ "Orange",
+                                           color == 3 ~ "Yellow",
+                                           color == 4 ~ "Green",
+                                           color == 5 ~ "Blue",
+                                           TRUE ~ "White") 
+                ) %>%
+        rename(DFS = currstatus) %>%
+        mutate(year = "1old")
     
  
 
     working %>%
         filter(District == dist,
                Test == assessment) %>%
-        mutate(DFS = as.numeric(DFS)) %>%
+        mutate(DFS = as.numeric(DFS),
+               year = "2new") %>%
         bind_rows(dash2) %>%
         mutate(EstimatedColor = factor(EstimatedColor),
-               EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) ) %>%
+               EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ),
+               year = factor(year),
+               year = fct_relevel(year,"1old" ) ,
+               
+               ) %>%
 
 
-        ggplot(aes(x = Group, y = DFS)) +
+        ggplot(aes(x = Group, y = DFS, group = year)) +
  #       ggplot(aes(x = fct_reorder(Group,DFS), y = DFS)) +
-        geom_col(aes(fill = EstimatedColor,
+        geom_col_pattern(aes(fill = EstimatedColor,
+                             pattern = year,
                      color = "black"),
                  position = "dodge2") +
+        scale_pattern_manual(values=c('wave', 'wave')) +
         mcoe_theme +
         {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         scale_fill_identity() +
         scale_color_identity() +
+        theme(legend.position = "none") +
         labs(y = "Distance from Standard",
              title = paste0(dist.name," - ",assessment," CAASPP Student Group Results 2024"),
-             subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color")
+             subtitle = if_else(old.colors == FALSE,
+                                "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color",
+                                "2023 results are on the left and 2024 estimates are on the right for each student group")
+             )
     
     
     ggsave(here("output",save.folder ,paste0(dist.name, " - ",assessment," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)    
@@ -150,9 +169,10 @@ work.group <-   working %>%
 
 
 
-dfs.comp(dist = "nmcusd.24",
-          assessment = "ELA",
-          dist.name = "North Monterey County")
+dfs.comp(old.colors = TRUE,
+         dist = "kingcity.24",
+          assessment = "Math",
+          dist.name = "King City")
 
 
 dfs.comp(dist = "mpusd.24",
@@ -230,7 +250,7 @@ dfs.school.graph <- function(df) {
 
 
     
-dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE ) {
+dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE, old.colors = FALSE ) {
     
 
     
@@ -269,9 +289,18 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
                indicator == ass2,
                Group %in% work.group
         ) %>%
-        select(districtname, indicator, currstatus, Group) %>%
-        mutate(EstimatedColor = "Light Gray") %>%
-        rename(DFS = currstatus)
+        select(districtname, indicator, currstatus, color ,Group) %>%
+        mutate( EstimatedColor = case_when(old.colors == FALSE ~ "Light Gray",
+                                           color == 1 ~ "Red",
+                                           color == 2 ~ "Orange",
+                                           color == 3 ~ "Yellow",
+                                           color == 4 ~ "Green",
+                                           color == 5 ~ "Blue",
+                                           TRUE ~ "White") 
+        ) %>%
+        rename(DFS = currstatus) %>%
+        mutate(year = "1old")
+    
     
     
     
@@ -351,10 +380,15 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
                DFS = DFS.x
         ) %>%
                                           
-        
+        mutate(
+               year = "2new") %>%
         bind_rows(dash2) %>%
         mutate(EstimatedColor = factor(EstimatedColor),
-            EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) )
+            EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) ,
+            year = factor(year),
+            year = fct_relevel(year,"1old" ) ,
+            
+            )
     
     
     
@@ -362,7 +396,7 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
 }
 
 
-dfs.comp.school.graph <- function(df) {
+dfs.comp.school.graph <- function(df, old.colors = FALSE) {
     
     
     work.group <-   df %>%
@@ -374,19 +408,27 @@ dfs.comp.school.graph <- function(df) {
     ass <- df$Test[1]
     
     df %>%
-        ggplot(aes(x = Group, y = DFS)) +
+        ggplot(aes(x = Group, y = DFS, group = year)) +
 #        ggplot(aes(x = fct_reorder(Group,DFS), y = DFS)) +
-        geom_col(aes(fill = EstimatedColor,
+        geom_col_pattern(aes(fill = EstimatedColor,
+                             pattern = year,
                      color = "black"),
                  position = "dodge2") +
+        scale_pattern_manual(values=c('wave', 'wave')) +
+        
         {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         mcoe_theme +
         scale_fill_identity() +
         scale_color_identity() +
+        theme(legend.position = "none") +
+        
         labs(y = "Distance from Standard",
              title = paste0(skul, " - ", ass," CAASPP Student Group Estimates 2024"),
-             subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color")
-
+             subtitle = if_else(old.colors == FALSE,
+                                "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color",
+                                "2023 results are on the left and 2024 estimates are on the right for each student group")
+        )
+    
 
     ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
     

@@ -78,14 +78,14 @@ susp.group.rate <- function(df, studentgroup) {
 
 
 
-mpusd.sus.joint <- susp.df(mpusd.sus.24,mpusd.demo.24 )
+mcoe.sus.joint <- susp.df(mcoe.sus.24,mcoe.demo.24 )
 
-susp.group.rate(mpusd.sus.joint, EthnicityRace)
-susp.group.rate(mpusd.sus.joint, Homeless)
-susp.group.rate(mpusd.sus.joint, StudentswithDisabilities)
-susp.group.rate(mpusd.sus.joint, EnglishLearner)
-susp.group.rate(mpusd.sus.joint, SocioEconomicallyDisadvantaged)
-susp.group.rate(mpusd.sus.joint, All)
+susp.group.rate(mcoe.sus.joint, EthnicityRace)
+susp.group.rate(mcoe.sus.joint, Homeless)
+susp.group.rate(mcoe.sus.joint, StudentswithDisabilities)
+susp.group.rate(mcoe.sus.joint, EnglishLearner)
+susp.group.rate(mcoe.sus.joint, SocioEconomicallyDisadvantaged)
+susp.group.rate(mcoe.sus.joint, All)
 
 
 
@@ -213,8 +213,8 @@ susp.dash.comp <- function(dist, dist.name ) {
 
 
 
-susp.dash.comp(dist = "mpusd.sus.joint",
-                  dist.name = "Monterey Peninsula")
+susp.dash.comp(dist = "mcoe.sus.joint",
+                  dist.name = "Monterey County")
 
 
 
@@ -296,7 +296,7 @@ add.school.susp <- function(df) {
         bind_rows(  susp.school(df,EnglishLearner) ) %>%
         bind_rows( susp.school(df,Asian) )  %>%
         bind_rows( susp.school(df,Filipino) )  %>%
-        bind_rows( susp.school(df,Multiple) )  %>%
+   #     bind_rows( susp.school(df,Multiple) )  %>%
         bind_rows( susp.school(df,`Black/African Am`) )  %>%
         bind_rows( susp.school(df,`Am Indian/Alskn Nat`) )  %>%
         bind_rows( susp.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
@@ -314,15 +314,15 @@ add.school.susp <- function(df) {
 }
 
 
-mpusd.sus.school.joint %>% 
-    filter(str_detect(SchoolName,"Los Arboles"),
+mcoe.sus.school.joint %>% 
+    filter(str_detect(SchoolName,"Well"),
            # Grade %in% c("KN","1","2"),
            # StudentswithDisabilities == "Yes"
     ) %>%
     add.school.susp()
 
 
-holder <- mpusd.sus.school.joint %>%
+holder <- spreck.sus.school.joint %>%
     # filter(str_detect(DistrictName,dist.name)) %>%
     split(.$SchoolName) %>%
     map_df(~add.school.susp(.))  %>%
@@ -370,7 +370,7 @@ susp.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
     work.group <-   df %>%
         filter(SchoolCode == school.code #| SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         ) %>%
-        filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
+        filter(if(limit.case.count == TRUE )count >= 30 else count >= 10) %>%
         ungroup() %>%
         select(Group) %>%
         unique() %>%
@@ -392,7 +392,7 @@ susp.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
     df %>%
         filter(SchoolCode == school.code # | SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         ) %>%
-        filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
+        filter(if(limit.case.count == TRUE )count >= 30 else count >= 10) %>%
         #      mutate(DFS = as.numeric(DFS)) %>%
         left_join(dash2, by = c("Group")) %>%
         mutate(change = susp.rate.x - susp.rate.y,
@@ -549,7 +549,7 @@ susp.comp.school(holder, dist.code = 66092, school.code = 6026181, limit.case.co
 
 
 
-susp.all.schools <- function(df, dist.cd) {
+susp.all.schools <- function(df, dist.cd, limit.case.cnt = TRUE) {
     
     
     holder <- df %>%
@@ -574,7 +574,7 @@ susp.all.schools <- function(df, dist.cd) {
     
     for (i in 1:length(school.list)) {
         
-susp.df    <-    susp.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = TRUE) 
+susp.df    <-    susp.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt) 
         
             susp.comp.school.graph(susp.df)
             susp.school.graph(susp.df)
