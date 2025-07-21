@@ -4,26 +4,93 @@
 
 ### Load files -----
 
+
+caa.equivalent <- function(df) {
+    
+ df2 <-   df %>%
+        mutate(Subject = case_match(RecordType,
+                                    "01" ~ "ELA",
+                                    "02" ~ "Math",
+                                    "03" ~ "CAA for ELA",
+                                    "04" ~ "CAA for Math",
+                                    "05" ~ "CAA for Science",
+                                    "06" ~ "Science"),
+               subject.equiv = str_sub(Subject, 8,-1),
+               ScaleScoreAchievementLevel = as.character(AchievementLevels),
+               ScaleScore,
+               GradeLevelWhenAssessed = GradeAssessed,
+               AssessmentName = str_c("Grade ",GradeLevelWhenAssessed," ",Subject),
+        ) 
+    
+    df2 %>%
+        left_join(reference2 , by = c(#GradeLevelWhenAssessed == GradeLevelWhenAssessed,
+                                      subject.equiv == Subject,
+                                      ScaleScoreAchievementLevel == ScaleScoreAchievementLevel)
+                  )
+    
+}
+
+
+caa.equ <- function(level, subj, grad) {
+    
+    subj2 <- str_sub(subj, 9,-1)
+    
+#    print(subj2)
+    
+reference2 %>%
+        filter( Subject == subj2,
+               ScaleScoreAchievementLevel == level,
+                GradeLevelWhenAssessed == grad
+               ) %>%
+        arrange(desc(ScaleScoreNext)) %>%
+    bind_rows(tibble(Subject = "1", GradeLevelWhenAssessed = "1", ScaleScoreAchievementLevel = "1",ScaleScoreNext = 1, MeetStandard = 1)) %>%
+                             slice(1) %>%
+                             pull(ScaleScoreNext)
+}
+
+
+caa.equ(subj = "Math",
+        level = 1,
+        grad = "04")
+
 use.TOMS <- function(df) {
     
- df %>%
-    mutate(Subject = case_match(RecordType,
+df %>%
+    mutate(RealSubject = case_match(RecordType,
                                 "01" ~ "ELA",
                                 "02" ~ "Math",
-                                "06" ~ "CAST"),
+                                "03" ~ "CAA for ELA",
+                            "04" ~ "CAA for Math",
+                            "05" ~ "CAA for Science",
+                                "06" ~ "Science"),
+           Subject = case_match(RecordType,
+                                "01" ~ "ELA",
+                                "02" ~ "Math",
+                                "03" ~ "ELA",
+                                "04" ~ "Math",
+                                "05" ~ "Science",
+                                "06" ~ "Science") ,
            ScaleScoreAchievementLevel = AchievementLevels,
            ScaleScore,
-           GradeLevelWhenAssessed = GradeAssessed,
-           AssessmentName = str_c("Grade ",GradeLevelWhenAssessed," ",Subject),
+           GradeLevelWhenAssessed = as.character(GradeAssessed),
+           AssessmentName = str_c("Grade ",GradeLevelWhenAssessed," ",RealSubject),
     ) %>%
+     filter(!is.na(ScaleScoreAchievementLevel))  %>%
+     rowwise() %>%
+        mutate(AltScaleScore = caa.equ(subj = RealSubject,
+                                      level = ScaleScoreAchievementLevel,
+                                      grad = GradeLevelWhenAssessed),
+               ScaleScore= max(ScaleScore,AltScaleScore)
+        ) %>%
+     ungroup() %>%
     select(SSID,
            CALPADSDistrictCode:CALPADSSchoolName,
-           Subject,
+           Subject, RealSubject,
            ScaleScoreAchievementLevel,
            ScaleScore,
            GradeLevelWhenAssessed,
            AssessmentName,
-           
+
            CALPADSSpecialEducation:TwoorMoreRaces) %>%
     filter(!is.na(ScaleScore)) %>%
     rename(StudentIdentifier = SSID,
@@ -32,16 +99,19 @@ use.TOMS <- function(df) {
            ELexit = RFEPDate,
            SWD = CALPADSSpecialEducation,
            SED = EconomicDisadvantageStatus,
-           HOM = HomelessStatus,
+           HOM = CALPADSHomelessStatus,
     ) %>%
     mutate(ELdash = case_when(EL2 == "Yes" ~ "Yes",
-                              ymd(ELexit) >= ymd("2020-06-15") ~ "Yes",
-                              TRUE ~ "No"),
+                              ymd(ELexit) >= ymd("2021-06-15") ~ "Yes",
+                              TRUE ~ NA),
+           LTELdash = case_when(EL2 == "Yes" & ELEntryDate <= ymd( paste0(yr -7,"-06-15")) ~ "Yes",
+                              ymd(ELexit) <= ymd("2024-08-01") ~ NA,
+                              TRUE ~ NA),
            StudentIdentifier = as.numeric(StudentIdentifier)
     ) %>%
-    select(-EL2,-ELexit) %>%
-    select(-ELEntryDate:-FosterStatus) %>%
-    select(-ends_with("esting"), -ends_with("Flag")) %>%    
+    select(-EL2,-ELexit, -ELEntryDate, -FirstEntryDateInUSSchool) %>%
+    select(-EnrollmentEffectiveDate:-CALPADSFosterStatus) %>%
+    select(-ends_with("esting"), -ends_with("Flag")) %>%
     relocate(HispanicOrLatinoEthnicity, .before = SWD) %>%
     mutate(across(HispanicOrLatinoEthnicity:ELdash, ~na_if(., "No")))
 
@@ -399,7 +469,7 @@ pg.24 <- read_csv(here("data","pg","2024_CAASPP_Student_Score_Data_File.csv"))
 
 ### Reference -------
 
-reference <- read_excel(here("data","ScaleScoreREference.xlsx"))
+reference <- read_excel(here("data","ScaleScoreReference.xlsx"))
 
 reference2 <- pivot_longer(reference, cols = c(`1`,`2`,`3`,`4`) ) %>%
     mutate(Grade = if_else(str_length(Grade) >= 2, Grade, paste0(0,Grade))) %>%
@@ -464,7 +534,7 @@ reference2 <- reference2 %>%
  lagunita <- lagunita %>%
      clean.df() %>%
      filter(LanguageCode != "ger",
-            Subject != "CAST") %>%
+            Subject != "Science") %>%
      mutate(Race = case_when(White == "Yes" ~ "White",
                              HispanicOrLatinoEthnicity == "Yes" ~ "Latino",
                              #     NativeHawaiianOrOtherPacificIslander == "Yes" ~ "Pacific Islander",
@@ -488,7 +558,7 @@ overall.graph <- function(df) {
                                                                   "Met",
                                                                   "Exceeded"))
                ) %>%
-        ggplot( aes( y = Subject, fill = AchievementLevel)) +
+        ggplot( aes( y = RealSubject, fill = AchievementLevel)) +
         geom_bar(color = "black") +
         geom_text(    stat = "count",
                       aes(label = ..count..), 
@@ -531,7 +601,7 @@ df %>%
     ) %>%
     ggplot( aes( y = AssessmentName, fill = AchievementLevel)) +
     geom_bar(color = "black") +
-    facet_wrap(vars(Subject),
+    facet_wrap(vars(RealSubject),
                # vars(GradeLevelWhenAssessed),
                scales = "free") +
     geom_text(    stat = "count",
@@ -572,7 +642,7 @@ graph.grid <- function(df) {
         ) %>%
         ggplot( aes( y = AssessmentName, fill = AchievementLevel)) +
         geom_bar(color = "black") +
-        facet_grid(vars(Subject),
+        facet_grid(vars(RealSubject),
                    vars(GradeLevelWhenAssessed),
                    scales = "free") +
         geom_text(    stat = "count",
@@ -651,10 +721,10 @@ passing.perc <- function(df) {
     ddff <-     deparse(substitute(df)) 
     
 hold <- df %>%
-    group_by(Subject) %>%
+    group_by(RealSubject) %>%
     mutate(Above = ifelse(ScaleScoreAchievementLevel >= 3, TRUE, FALSE),
            perc = mean(Above)*100) %>%
-    select(Subject, perc) %>%
+    select(RealSubject, perc) %>%
     distinct()%>%
     mutate(district = ddff)
 
@@ -728,8 +798,9 @@ dfs <- function(df) {
         left_join(reference2) %>%
         group_by(Subject) %>%
         mutate(dist.standard = ScaleScore - MeetStandard,
-               mean.dist.stand = mean(dist.standard))  %>%
-        select(Subject,mean.dist.stand) %>%
+               mean.dist.stand = mean(dist.standard),
+               count = n())   %>%
+        select(Subject,mean.dist.stand, count) %>%
         distinct() %>%
        mutate(district = ddff)
     
@@ -743,7 +814,132 @@ dfs <- function(df) {
 }
 
 
-dfs(nmcusd.24)
+
+
+
+dfs.w.change <- function(df, cds) {
+  
+  # Saves dataframe name
+  ddff <-     deparse(substitute(df)) 
+  
+  holder <-  df %>% 
+    filter(Subject %in% c("ELA","Math")) %>%
+    mutate(ScaleScoreAchievementLevel = factor(ScaleScoreAchievementLevel),
+    ) %>%
+    left_join(reference2) %>%
+    group_by(Subject) %>%
+    mutate(dist.standard = ScaleScore - MeetStandard,
+           mean.dist.stand = mean(dist.standard),
+           count = n())   %>%
+    select(Subject,mean.dist.stand, count) %>%
+    distinct() %>%
+    mutate(district = ddff)
+  
+  
+  # Gets Dashboard data and compares 
+  
+dash.LEA  <- dash.district(cds) %>%
+  filter(
+    studentgroup == "ALL",
+    indicator == "ELA" | indicator == "MATH"
+  ) %>%
+  select(cds, Subject = indicator, oldDFS = currstatus, oldcolor = color ,Group, hscutpoints) %>%
+  mutate(Subject = case_when(Subject == "MATH" ~ "Math",
+                             TRUE ~ Subject)) %>%
+  mutate( old.colors = case_when(#old.colors == FALSE ~ "Light Gray",
+    oldcolor == 1 ~ "Red",
+    oldcolor == 2 ~ "Orange",
+    oldcolor == 3 ~ "Yellow",
+    oldcolor == 4 ~ "Green",
+    oldcolor == 5 ~ "Blue",
+                                     TRUE ~ "White") 
+  ) 
+
+print(dash.LEA)
+
+holder <- left_join(holder, dash.LEA) %>%
+  mutate( change = mean.dist.stand - oldDFS,
+          EstimatedColor = case_when(
+            #  count < 30 ~ "White",
+            
+            # High Schools
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-45.1 & change <= 2.99 ~ "Red",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-45.1 & change >= 3.0 ~ "Orange",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-0.1 & change <= 2.99 ~ "Orange",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Yellow",    
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=29.9 & change <= 2.99 ~ "Yellow",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=29.9 & change >= 3.0 ~ "Green",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=74.9 & change <= 14.99 ~ "Green",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=74.9 & change >= 15.0 ~ "Blue",           
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand >=75.0 & change <= -3.0 ~ "Green",
+            hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand >=75.0 & change  >= -3.0 ~ "Blue",
+            
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-115.1 & change <= 2.99 ~ "Red",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-115.1 & change >= 3.0 ~ "Orange",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-60.1 & change <= 2.99 ~ "Orange",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-60.1 & change >= 3.0 ~ "Yellow",    
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-0.1 & change <= 2.99 ~ "Yellow",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Green",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=24.9 & change <= 14.99 ~ "Green",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=24.9 & change >= 15.0 ~ "Blue",           
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand >=25.0 & change <= -3.0 ~ "Green",
+            hscutpoints == "Y" & Subject == "Math" & mean.dist.stand >=25.0 & change  >= -3.0 ~ "Blue",
+            
+            # Not High Schools
+            
+            Subject == "ELA" & mean.dist.stand <=-70.1 & change <= 2.9 ~ "Red",
+            Subject == "ELA" & mean.dist.stand <=-70.1 & change >= 3.0 ~ "Orange",
+            Subject == "ELA" & mean.dist.stand <=-5.1 & change <= 2.9 ~ "Orange",
+            Subject == "ELA" & mean.dist.stand <=-5.1 & change >= 3.0 ~ "Yellow",    
+            Subject == "ELA" & mean.dist.stand <=9.9 & change <= 2.9 ~ "Yellow",
+            Subject == "ELA" & mean.dist.stand <=9.9 & change >= 3.0 ~ "Green",
+            Subject == "ELA" & mean.dist.stand <=44.9 & change <= 14.9 ~ "Green",
+            Subject == "ELA" & mean.dist.stand <=44.9 & change >= 15.0 ~ "Blue",           
+            Subject == "ELA" & mean.dist.stand >=45.0 & change <= -3.0 ~ "Green",
+            Subject == "ELA" & mean.dist.stand >=45.0 & change  >= -3.0 ~ "Blue",
+            
+            Subject == "Math" & mean.dist.stand <=-95.1 & change <= 2.9 ~ "Red",
+            Subject == "Math" & mean.dist.stand <=-95.1 & change >= 3.0 ~ "Orange",
+            Subject == "Math" & mean.dist.stand <=-25.1 & change <= 2.9 ~ "Orange",
+            Subject == "Math" & mean.dist.stand <=-25.1 & change >= 3.0 ~ "Yellow",    
+            Subject == "Math" & mean.dist.stand <=-0.1 & change <= 2.9 ~ "Yellow",
+            Subject == "Math" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Green",
+            Subject == "Math" & mean.dist.stand <=34.9 & change <= 14.9 ~ "Green",
+            Subject == "Math" & mean.dist.stand <=34.9 & change >= 15.0 ~ "Blue",           
+            Subject == "Math" & mean.dist.stand >=35.0 & change <= -3.0 ~ "Green",
+            Subject == "Math" & mean.dist.stand >=35.0 & change  >= -3.0 ~ "Blue"
+            
+            
+            #  !is.na(mean.dist.stand) & is.na(DFS.y) ~ "Black",
+          )
+  ) %>%
+  select(-oldcolor, - hscutpoints)
+  
+
+
+holder
+
+
+  # Posts to the google sheet
+  sheet_append(ss = sheet,
+               sheet = "Distance from Standard",
+               data = holder )
+  
+  holder
+  
+}
+
+dfs.w.change(nmcusd.25, "27738250000000")
+
+# Works for ALL now need to do the calcs for each student group 
+
+
+
+dfs.w.change(suhsd.24, "27661590000000")
+temp <- dash.district("27661590000000")
+
+
+temp <- dfs(soledad.24)
 
  
  ### Student Group Size ------
@@ -758,9 +954,9 @@ dfs(nmcusd.24)
          group_by(Subject) %>%
          # summarise( across(c(HispanicOrLatinoEthnicity:Filipino,EL), ~  sum(!is.na(.)))) %>%
          # pivot_longer(cols = c(HispanicOrLatinoEthnicity:Filipino,EL)) %>%
-         summarise( across(c(HispanicOrLatinoEthnicity:ELdash), ~  sum(!is.na(.)))) %>%
-         pivot_longer(cols = c(HispanicOrLatinoEthnicity:ELdash)) %>%
-         filter(if(limit.30 == TRUE )value >= 30 | name == "HOM" & value >= 15 else value >= 1) %>%
+         summarise( across(c(HispanicOrLatinoEthnicity:LTELdash), ~  sum(!is.na(.)))) %>%
+         pivot_longer(cols = c(HispanicOrLatinoEthnicity:LTELdash)) %>%
+         filter(if(limit.30 == TRUE )value >= 30 | name == "HOM" & value >= 15 | name == "LTELdash" & value >= 15 else value >= 1) %>%
          print(n = 30)
  }
 
@@ -789,6 +985,10 @@ for (i in my.list) {
  
  dfs2 <- function(df,students) {
      
+ cds <-   df$CALPADSDistrictCode[1]
+ 
+ print(cds)
+ 
      ddff <-     deparse(substitute(df)) 
 studentsss <-     deparse(substitute(students))
      
@@ -807,6 +1007,112 @@ studentsss <-     deparse(substitute(students))
                 students = studentsss
          )
     
+    
+    
+    # Gets Dashboard data and compares 
+    
+    group_map <- c(
+      "SED" = "SED",
+      "SWD" = "SWD",
+      "White" = "WH",
+      "ELdash" = "EL",                              
+      "AmericanIndianorAlaskaNative" = "AI",
+      "Asian" = "AS",
+      "Filipino" = "FI",
+      "HawaiianOrOtherPacificIslander" = "PI",
+      "TwoorMoreRaces" = "MR",
+      "BlackorAfricanAmerican" = "AA",
+      "HispanicOrLatinoEthnicity" = "HI",
+      "HOM" = "HOM",
+      "LTELdash" = "LTEL"
+    )
+    
+
+    dash.LEA  <- dash.district(cds) %>%
+      filter(
+        studentgroup == group_map[studentsss],
+        indicator == "ELA" | indicator == "MATH",
+        
+      )     %>%
+      select(cds, Subject = indicator, oldDFS = currstatus, oldcolor = color ,Group, hscutpoints) %>%
+      mutate(Subject = case_when(Subject == "MATH" ~ "Math",
+                                 TRUE ~ Subject)) %>%
+      mutate( old.colors = case_when(#old.colors == FALSE ~ "Light Gray",
+        oldcolor == 1 ~ "Red",
+        oldcolor == 2 ~ "Orange",
+        oldcolor == 3 ~ "Yellow",
+        oldcolor == 4 ~ "Green",
+        oldcolor == 5 ~ "Blue",
+        TRUE ~ "White")
+      )
+    
+    
+    holder <- left_join(holder, dash.LEA) %>%
+      mutate( change = mean.dist.stand - oldDFS,
+              EstimatedColor = case_when(
+                #  count < 30 ~ "White",
+                
+                # High Schools
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-45.1 & change <= 2.99 ~ "Red",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-45.1 & change >= 3.0 ~ "Orange",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-0.1 & change <= 2.99 ~ "Orange",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Yellow",    
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=29.9 & change <= 2.99 ~ "Yellow",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=29.9 & change >= 3.0 ~ "Green",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=74.9 & change <= 14.99 ~ "Green",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand <=74.9 & change >= 15.0 ~ "Blue",           
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand >=75.0 & change <= -3.0 ~ "Green",
+                hscutpoints == "Y" & Subject == "ELA" & mean.dist.stand >=75.0 & change  >= -3.0 ~ "Blue",
+                
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-115.1 & change <= 2.99 ~ "Red",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-115.1 & change >= 3.0 ~ "Orange",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-60.1 & change <= 2.99 ~ "Orange",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-60.1 & change >= 3.0 ~ "Yellow",    
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-0.1 & change <= 2.99 ~ "Yellow",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Green",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=24.9 & change <= 14.99 ~ "Green",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand <=24.9 & change >= 15.0 ~ "Blue",           
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand >=25.0 & change <= -3.0 ~ "Green",
+                hscutpoints == "Y" & Subject == "Math" & mean.dist.stand >=25.0 & change  >= -3.0 ~ "Blue",
+                
+                # Not High Schools
+                
+                Subject == "ELA" & mean.dist.stand <=-70.1 & change <= 2.9 ~ "Red",
+                Subject == "ELA" & mean.dist.stand <=-70.1 & change >= 3.0 ~ "Orange",
+                Subject == "ELA" & mean.dist.stand <=-5.1 & change <= 2.9 ~ "Orange",
+                Subject == "ELA" & mean.dist.stand <=-5.1 & change >= 3.0 ~ "Yellow",    
+                Subject == "ELA" & mean.dist.stand <=9.9 & change <= 2.9 ~ "Yellow",
+                Subject == "ELA" & mean.dist.stand <=9.9 & change >= 3.0 ~ "Green",
+                Subject == "ELA" & mean.dist.stand <=44.9 & change <= 14.9 ~ "Green",
+                Subject == "ELA" & mean.dist.stand <=44.9 & change >= 15.0 ~ "Blue",           
+                Subject == "ELA" & mean.dist.stand >=45.0 & change <= -3.0 ~ "Green",
+                Subject == "ELA" & mean.dist.stand >=45.0 & change  >= -3.0 ~ "Blue",
+                
+                Subject == "Math" & mean.dist.stand <=-95.1 & change <= 2.9 ~ "Red",
+                Subject == "Math" & mean.dist.stand <=-95.1 & change >= 3.0 ~ "Orange",
+                Subject == "Math" & mean.dist.stand <=-25.1 & change <= 2.9 ~ "Orange",
+                Subject == "Math" & mean.dist.stand <=-25.1 & change >= 3.0 ~ "Yellow",    
+                Subject == "Math" & mean.dist.stand <=-0.1 & change <= 2.9 ~ "Yellow",
+                Subject == "Math" & mean.dist.stand <=-0.1 & change >= 3.0 ~ "Green",
+                Subject == "Math" & mean.dist.stand <=34.9 & change <= 14.9 ~ "Green",
+                Subject == "Math" & mean.dist.stand <=34.9 & change >= 15.0 ~ "Blue",           
+                Subject == "Math" & mean.dist.stand >=35.0 & change <= -3.0 ~ "Green",
+                Subject == "Math" & mean.dist.stand >=35.0 & change  >= -3.0 ~ "Blue"
+                
+                
+                #  !is.na(mean.dist.stand) & is.na(DFS.y) ~ "Black",
+              )
+      ) %>%
+      select(-oldcolor, -hscutpoints)
+    
+    
+    
+    holder
+    
+    
+    
+    
+    
     sheet_append(ss = sheet,
                  sheet = "Distance from Standard Group",
                 data = holder )
@@ -814,7 +1120,7 @@ studentsss <-     deparse(substitute(students))
      
  }
 
- dfs2(nmcusd.24,White) 
+ dfs2(nmcusd.25,White) 
   dfs2(nmcusd.24,EL) 
  dfs2(nmcusd.24, HispanicOrLatinoEthnicity)
  
@@ -1091,7 +1397,9 @@ soledad.23 <-  add.demo(soledad.23, soledad.23.demo)
    waiting.room <- dfs2.school(df %>% mutate(All = "Yes"),All) %>%
        bind_rows(  
            dfs2.school(df,White) ) %>%
-       bind_rows(  dfs2.school(df,ELdash) ) %>%
+   bind_rows(  dfs2.school(df,ELdash) ) %>%
+     bind_rows(  dfs2.school(df,LTELdash) ) %>% ##################
+     
    bind_rows( dfs2.school(df,Asian) )  %>%
    bind_rows( dfs2.school(df,Filipino) )  %>%
    bind_rows( dfs2.school(df,TwoorMoreRaces) )  %>%
@@ -1109,8 +1417,8 @@ soledad.23 <-  add.demo(soledad.23, soledad.23.demo)
    
    
    
-   school.split <-  mpusd.24 %>%
-       filter(str_detect(CALPADSDistrictName,"Monterey Peninsula")) 
+   school.split <-  suhsd.24 %>%
+       filter(str_detect(CALPADSDistrictName,"Salinas Union")) 
    
    school.split %>%
        split(school.split$CALPADSSchoolName) %>%
@@ -1178,6 +1486,8 @@ holder <-    school.split %>%
                               "SWD" ~ "Students with \nDisabilities",
                               "SED" ~ "Socio-Economically \nDisadvantaged",
                               "HispanicOrLatinoEthnicity" ~ "Latino",
+                              "TwoorMoreRaces" ~ "Multiple \nRaces",
+                              
                               "ELdash" ~ "English Learner",
                               .default = students
     ))

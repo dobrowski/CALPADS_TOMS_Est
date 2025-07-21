@@ -34,12 +34,17 @@ calpads.join <- function(df, df.demo, grade.filt = TRUE) {
     
 
     df.calpads.demo2 <- df.demo %>%
-        select(SSID, EthnicityRace, Homeless, StudentswithDisabilities, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
+      
+     mutate( LTEL = case_when(ELAStatus == "EL" & mdy(ELAStatusStartDate) <= ymd( paste0(yr -7,"-06-15")) ~ "Y",
+                           TRUE ~ "N")
+     ) %>%
+        select(SSID, EthnicityRace, Homeless, StudentswithDisabilities, EnglishLearner = EnglishLearner_ReclassifiedFluentEnglishProficient, LTEL, SocioEconomicallyDisadvantaged) %>%
         distinct() %>%
         group_by(SSID) %>%
         mutate(Homeless = if_else(any(Homeless == "Y"), "Y", "N" ),
                StudentswithDisabilities = if_else(any(StudentswithDisabilities == "Y"), "Y", "N" ),
                EnglishLearner = if_else(any(EnglishLearner == "Y"), "Y", "N" ),
+               LTEL = if_else(any(LTEL == "Y"), "Y", "N" ),
                SocioEconomicallyDisadvantaged = if_else(any(SocioEconomicallyDisadvantaged == "Y"), "Y", "N" ),
                All = "Y"
         ) %>%
@@ -51,6 +56,7 @@ calpads.join <- function(df, df.demo, grade.filt = TRUE) {
     
     
 }
+
 
 chronic.group.rate <- function(df, studentgroup) {
 
@@ -73,6 +79,103 @@ chronic.group.rate <- function(df, studentgroup) {
     holder
 
     
+}
+
+chronic.group.rate.w.change <- function(df, studentgroup, cds) {
+  
+  ddff <-     deparse(substitute(df)) 
+  studentsss <-     deparse(substitute(studentgroup))
+  
+  holder <- df %>%
+    filter(DaysExpectedA >= 31) %>%
+    group_by({{studentgroup}}) %>%
+    transmute(count = n(),
+              perc.chronic = 100*mean(chronic)) %>%
+    distinct()%>%
+    { if (!"EthnicityRace" %in% names(.)) mutate(., EthnicityRace = "blank") else . } %>%
+    mutate(district = ddff,
+           students = if_else(studentsss == "EthnicityRace", EthnicityRace ,studentsss)
+    ) %>%
+ #   mutate(Group = students)
+  mutate(Group = case_match(students,
+                            "All" ~ "All",
+                            "Homeless" ~ "Homeless",
+                            "StudentswithDisabilities" ~ "Students with \nDisabilities",
+                            "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
+                            "Hispanic" ~ "Latino",
+                            "EnglishLearner" ~ "English \nLearner",
+                            "LTEL" ~ "Long Term\nEnglish\nLearner",
+                            
+                            "Black/African Am" ~ "Black/\nAfrican Am",
+                            "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
+                            "Multiple" ~ "Multiple \nRaces",
+                            .default = students
+  )) %>%
+    filter(Group != "Missing")
+  
+  
+  
+  
+  print("holder")
+  print(holder)
+  
+  # Gets Dashboard data and compares 
+  
+  dash.LEA  <- dash.district(cds) %>%
+    filter(
+   #   studentgroup == "ALL",
+      indicator == "CHRO"
+    ) %>%
+    select(cds, Subject = indicator, oldstatus = currstatus, oldcolor = color ,Group) %>%
+    mutate( old.colors = case_when(#old.colors == FALSE ~ "Light Gray",
+      oldcolor == 1 ~ "Red",
+      oldcolor == 2 ~ "Orange",
+      oldcolor == 3 ~ "Yellow",
+      oldcolor == 4 ~ "Green",
+      oldcolor == 5 ~ "Blue",
+      TRUE ~ "White") 
+    ) 
+  
+  print("dash.LEA")
+  print(dash.LEA)
+  
+  holder <- left_join(holder, dash.LEA) %>%
+    mutate( change = perc.chronic - oldstatus,
+            EstimatedColor = case_when(
+              count < 30 ~ "White",
+              perc.chronic >=20 & change > -0.5 ~ "Red",
+              perc.chronic >=20 & change <= -3.0 ~ "Yellow",
+              perc.chronic >=20 & change <= -0.5 ~ "Orange",
+              
+              perc.chronic >=10 & change >= 3.0 ~ "Red",
+              perc.chronic >=10 & change <= -0.5 ~ "Yellow", 
+              perc.chronic >=10 & change < 3.0 ~ "Orange", 
+              
+              perc.chronic >=5 & change > 0.5 ~ "Orange",
+              perc.chronic >=5 & change <= -0.5 ~ "Green",
+              perc.chronic >=5 & change < 0.5 ~ "Yellow",
+              
+              perc.chronic >=2.5 & change >= 3.0 ~ "Orange",
+              perc.chronic >=2.5 & change <= -3.0 ~ "Blue",    
+              perc.chronic >=2.5 & change <= 0.5 ~ "Green",    
+              perc.chronic >=2.5 & change < 3.0 ~ "Yellow",    
+              
+              perc.chronic < 2.5 & change >= 3.0 ~ "Yellow",
+              perc.chronic < 2.5 & change <= 0.5 ~ "Blue",
+              perc.chronic < 2.5 & change  < 3.0 ~ "Green"
+
+            )
+    ) %>%
+    select(-oldcolor, -Subject, -EthnicityRace) %>%
+    filter({{studentgroup}} != "N") 
+  
+  
+  sheet_append(ss = sheet,
+               sheet = "Chronic Group",
+               data = holder )
+  holder
+  
+  
 }
 
 
@@ -114,14 +217,12 @@ chronic.dash.graph <- function(dist, dist.name ) {
         scale_fill_identity() +
         scale_color_identity() +
         labs(y = "Percent Chronically Absent",
-             title = paste0(dist.name," - Chronically Absent Student Group Estimates 2024"))
+             title = paste0(dist.name," - Chronically Absent Student Group Estimates ", thisyear))
     
     
-    ggsave(here("output",save.folder ,paste0(dist.name, " - Chronically Absent Student Group Estimates 2024 ", Sys.Date(),".png")), width = 8, height = 5)    
+    ggsave(here("output",save.folder ,paste0(dist.name, " - Chronically Absent Student Group Estimates ", thisyear , Sys.Date(),".png")), width = 8, height = 5)    
     
 }
-
-
 
 
 working <- read_sheet(ss = sheet,
@@ -136,6 +237,8 @@ working <- read_sheet(ss = sheet,
                               "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                               "Multiple" ~ "Multiple \nRaces",
@@ -151,7 +254,7 @@ chronic.dash.graph(dist = "mpusd.abs.joint",
 ### Comparison to prior year ----
 
 
-chronic.dash.comp <- function(dist, dist.name ) {
+chronic.dash.comp <- function(dist, dist.name , old.colors = FALSE) {
     
     
     work.group <-   working %>%
@@ -161,15 +264,27 @@ chronic.dash.comp <- function(dist, dist.name ) {
         unique() %>%
         flatten()
     
-    dash2 <- dash %>%
+    dash2 <- dash.all %>%
         filter(str_detect(districtname, dist.name),
+               reportingyear == yr - 1, 
                rtype == "D",
                Group %in% work.group,
                indicator == "CHRO" 
         ) %>%
-        select(districtname, indicator, currstatus, Group) %>%
-        mutate(EstimatedColor = "Light Gray") %>%
-        rename(PercentChronicAbsent = currstatus)
+        select(districtname, indicator, currstatus, Group, color) %>%
+        mutate(EstimatedColor = case_when(old.colors == FALSE ~ "Light Gray",
+                                          color == 1 ~ "Red",
+                                          color == 2 ~ "Orange",
+                                          color == 3 ~ "Yellow",
+                                          color == 4 ~ "Green",
+                                          color == 5 ~ "Blue",
+                                          color == 0 ~ "White"
+        )
+        
+                                           ) %>%
+        rename(PercentChronicAbsent = currstatus)  %>%
+        mutate(year = "1old")
+    
     
     
     
@@ -177,43 +292,60 @@ df <-    working %>%
         filter(District == dist
                ) %>%
         mutate(PercentChronicAbsent = as.numeric(PercentChronicAbsent)) %>%
+    mutate(
+        year = "2new") %>%
         bind_rows(dash2) %>%
-        mutate(EstimatedColor = as_factor(EstimatedColor)) 
+    mutate(EstimatedColor = factor(EstimatedColor),
+           EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) ,
+           year = factor(year),
+           year = fct_relevel(year,"1old" ) ,
+           
+    )
+
         
 # Sorts only by the current year
  leveler <- df %>% 
      filter(EstimatedColor != "Light Gray") %>%
-     arrange(PercentChronicAbsent) 
+ arrange(PercentChronicAbsent) 
 
  levelss <- leveler$Group %>% union(working$Group %>% unique())
 
 
-df %>%   
+
+df %>%
     mutate(# Group = factor(Group, levels = levelss), # Sorts only by the current year
            EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) # Puts gray to the left of color
            ) %>%
-    ggplot(aes(x = Group, y = PercentChronicAbsent)) +
+    ggplot(aes(x = Group, y = PercentChronicAbsent, group = year)) +
 #    ggplot(aes(x = fct_reorder(Group,PercentChronicAbsent), y = PercentChronicAbsent)) +
-        geom_col(aes(fill = EstimatedColor,
+        geom_col_pattern(aes(fill = EstimatedColor,
+                             pattern = year,
                      color = "black"),
                  position = "dodge2") +
+    {if(old.colors==TRUE)scale_pattern_manual(values=c('stripe', 'wave'))else scale_pattern_manual(values=c('wave', 'wave'))    } +
+    
         mcoe_theme +
     {if(length(unique(df$Group)) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         scale_fill_identity() +
         scale_color_identity() +
+    theme(legend.position = "none") +
+    
         labs(y = "Percent Chronically Absent",
-             title = paste0(dist.name," - Chronically Absent Student Group Estimates 2024"),
-             subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color")
-    
-    
-    ggsave(here("output",save.folder ,paste0(dist.name," - Chronically Absent Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)    
-    
+             title = paste0(dist.name," - Chronically Absent Student Group Estimates ", thisyear ,""),
+             subtitle = if_else(old.colors == FALSE,
+                                paste0("Gray is ", lastyear, " results and Colored bars are ", thisyear ," with the estimated Dashboard color"),
+                                paste0("", lastyear, " results are on the left and ", thisyear ," estimates are on the right for each student group")
+             )
+        )
+
+    ggsave(here("output",save.folder ,paste0(dist.name," - Chronically Absent Student Group Results ", lastyear, " and ", thisyear ," Comparison ",if_else(old.colors == TRUE, "old colors ",""), Sys.Date(),".png")), width = 8, height = 5)
+
 }
 
 
-
 chronic.dash.comp(dist = "mpusd.abs.joint",
-                  dist.name = "Monterey Peninsula")
+                  dist.name = "Monterey Peninsula",
+                  old.colors = TRUE)
 
 
 
@@ -245,12 +377,16 @@ chr.joint.school <- function(df, df.demo, dist.name, grade.filt = TRUE) {
     
     
     df.calpads.demo2 <- df.demo %>%
-        select(SSID, EthnicityRace, Homeless, StudentswithDisabilities, EnglishLearner, SocioEconomicallyDisadvantaged) %>%
+      mutate( LTEL = case_when(ELAStatus == "EL" & mdy(ELAStatusStartDate) <= ymd( paste0(yr -7,"-06-15")) ~ "Y",
+                               TRUE ~ "N")
+      ) %>%
+        select(SSID, EthnicityRace, Homeless, StudentswithDisabilities, EnglishLearner = EnglishLearner_ReclassifiedFluentEnglishProficient, LTEL, SocioEconomicallyDisadvantaged) %>%
         distinct() %>%
         group_by(SSID) %>%
         mutate(Homeless = if_else(any(Homeless == "Y"), "Yes", "N" ),
                StudentswithDisabilities = if_else(any(StudentswithDisabilities == "Y"), "Yes", "N" ),
                EnglishLearner = if_else(any(EnglishLearner == "Y"), "Yes", "N" ),
+               LTEL = if_else(any(LTEL == "Y"), "Yes", "N" ),
                SocioEconomicallyDisadvantaged = if_else(any(SocioEconomicallyDisadvantaged == "Y"), "Yes", "N" ),
         ) %>%
         distinct()  %>%
@@ -305,12 +441,14 @@ add.school.car <- function(df) {
     waiting.room <- car.school(df,All) %>%
         bind_rows(  car.school(df,White) ) %>%
         bind_rows(  car.school(df,EnglishLearner) ) %>%
-        bind_rows( car.school(df,Asian) )  %>%
+      bind_rows(  car.school(df,LTEL) ) %>%
+      
+              bind_rows( car.school(df,Asian) )  %>%
         bind_rows( car.school(df,Filipino) )  %>%
-    #    bind_rows( car.school(df,Multiple) )  %>%
-    #    bind_rows( car.school(df,`Black/African Am`) )  %>%
+#        bind_rows( car.school(df,Multiple) )  %>%
+        bind_rows( car.school(df,`Black/African Am`) )  %>%
         bind_rows( car.school(df,`Am Indian/Alskn Nat`) )  %>%
-   #     bind_rows( car.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
+        bind_rows( car.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
         bind_rows( car.school(df,Hispanic) )  %>%
         bind_rows( car.school(df,StudentswithDisabilities) )  %>%
         bind_rows( car.school(df,SocioEconomicallyDisadvantaged) )  %>%
@@ -354,6 +492,8 @@ holder <- mpusd.abs.school.joint %>%
                               "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                               "Multiple" ~ "Multiple \nRaces",
@@ -364,14 +504,15 @@ holder <- mpusd.abs.school.joint %>%
 
 dash.school.chr <- function(cdsCode) {
     
-    dash %>%
+    dash.all %>%
         filter(cds == cdsCode,
+               reportingyear == yr - 1, 
                rtype == "S",
                indicator == "CHRO")
     
 }
 
-chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE ) {
+chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE, old.colors = FALSE ) {
     
     cds <- paste0("27",dist.code, str_pad(school.code, 7, side="left", pad="0"))
 
@@ -391,10 +532,20 @@ chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRU
         filter(# str_detect(districtname, dist.name),
             Group %in% work.group
         ) %>%
-        select(districtname, schoolname ,indicator, currstatus, Group) %>%
-        mutate(EstimatedColor = "Light Gray") %>%
-        rename(chronic.rate = currstatus)
-    
+        select(districtname, indicator, currstatus, Group, color) %>%
+        mutate(EstimatedColor = case_when(old.colors == FALSE ~ "Light Gray",
+                                          color == 1 ~ "Red",
+                                          color == 2 ~ "Orange",
+                                          color == 3 ~ "Yellow",
+                                          color == 4 ~ "Green",
+                                          color == 5 ~ "Blue",
+                                          color == 0 ~ "White"
+        )
+        
+        ) %>%
+        rename(chronic.rate = currstatus) %>%
+        mutate(year = "1old")
+
     print(dash2)
     
     
@@ -430,20 +581,22 @@ chron.comp.school <- function(df, dist.code, school.code, limit.case.count = TRU
                    chronic.rate.x < 2.5 & change <= 0.5 ~ "Blue",
                    chronic.rate.x < 2.5 & change  < 3.0 ~ "Green",
                    
-
-                   
-    #               !is.na(DFS.x) & is.na(DFS.y) ~ "Black",
-                   
                    TRUE ~ EstimatedColor
                    
                ),
     chronic.rate = chronic.rate.x
         ) %>%
+        mutate(
+            year = "2new") %>%
         
         
         bind_rows(dash2) %>%
         mutate(EstimatedColor = factor(EstimatedColor),
-               EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) )
+               EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) ,
+               year = factor(year),
+               year = fct_relevel(year,"1old" ) ,
+               
+        )
     
     
     
@@ -465,7 +618,7 @@ chron.school.graph <- function(df) {
         flatten()
     
     
-    skul <- df$schoolname[1]
+    skul <- df$SchoolName[1]
     
     df %>%
         filter(!is.na(district)) %>%
@@ -479,18 +632,18 @@ chron.school.graph <- function(df) {
         scale_fill_identity() +
         scale_color_identity() +
         labs(y = "Chronic Absenteeism Rate",
-             title = paste0(skul, " Chronic Absenteeism Student Group Estimates 2024"),
+             title = paste0(skul, " Chronic Absenteeism Student Group Estimates ", thisyear),
             # subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color"
              )
     
     
-    ggsave(here("output",save.folder ,paste0(skul," Chronic Student Group Estimates 2024 ", Sys.Date(),".png")), width = 8, height = 5)
+    ggsave(here("output",save.folder ,paste0(skul," Chronic Student Group Estimates ",thisyear , Sys.Date(),".png")), width = 8, height = 5)
     
     
 } 
 
 
-chron.comp.school.graph <- function(df) {
+chron.comp.school.graph <- function(df, old.colors = FALSE) {
     
     
     
@@ -500,37 +653,44 @@ chron.comp.school.graph <- function(df) {
         flatten()
     
     
-    skul <- df$schoolname[1]
+    skul <- unique(df$SchoolName)[1]
 
     df %>%
-        ggplot(aes(x = Group, y = chronic.rate)) +
-        geom_col(aes(fill = EstimatedColor,
-                     color = "black"),
-                 position = "dodge2") +
+        ggplot(aes(x = Group, y = chronic.rate, group = year)) +
+        geom_col_pattern(aes(fill = EstimatedColor,
+                             pattern = year,
+                             color = "black"),
+                         position = "dodge2") +
+        {if(old.colors==TRUE)scale_pattern_manual(values=c('stripe', 'wave'))else scale_pattern_manual(values=c('wave', 'wave'))    } +
         {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         
         mcoe_theme +
         scale_fill_identity() +
         scale_color_identity() +
+        theme(legend.position = "none") +
         labs(y = "Chronic Absenteeism Rate",
-             title = paste0(skul, " Chronic Absenteeism Student Group Estimates 2024"),
-             subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color")
+             title = paste0(skul," - Chronically Absent Student Group Estimates ", thisyear ,""),
+             subtitle = if_else(old.colors == FALSE,
+                                paste0("Gray is ", lastyear, " results and Colored bars are ", thisyear ," with the estimated Dashboard color"),
+                                paste0("", lastyear, " results are on the left and ", thisyear ," estimates are on the right for each student group")
+             )
+        )
     
     
-        ggsave(here("output",save.folder ,paste0(skul," Chronic Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
+        ggsave(here("output",save.folder ,paste0(skul," - Chronically Absent Student Group Results ", lastyear, " and ", thisyear ," Comparison ",if_else(old.colors == TRUE, "old colors ",""), Sys.Date(),".png")), width = 8, height = 5)
     
     
 } 
 
-chron.comp.school(holder, dist.code = 66092, school.code = 6026181, limit.case.count = TRUE) %>%
-    chron.comp.school.graph()
+chron.comp.school(holder, dist.code = 75440, school.code = 6026678, limit.case.count = TRUE, old.colors = TRUE) %>%
+    chron.comp.school.graph(old.colors = TRUE)
 
 chron.comp.school(holder, dist.code = 66092, school.code = 6026181, limit.case.count = TRUE) %>%
     chron.school.graph()
 
 
 
-chron.all.schools <- function(df, dist.cd, limit.case.cnt = TRUE) {
+chron.all.schools <- function(df, dist.cd, limit.case.cnt = TRUE, old.culrs = TRUE) {
     
 
 holder <- df %>%
@@ -544,6 +704,8 @@ holder <- df %>%
                               "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                               "Multiple" ~ "Multiple \nRaces",
@@ -555,12 +717,12 @@ school.list <- holder$SchoolCode %>% unique()
 
 for (i in 1:length(school.list)) {
     
-chron.df <- chron.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt) 
+chron.df <- chron.comp.school(df = holder, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt, old.colors = old.culrs) 
 
-chron.comp.school.graph(chron.df)
+chron.comp.school.graph(chron.df, old.colors = old.culrs)
 chron.school.graph(chron.df)
     
- #   ggsave(here("output",save.folder ,paste0(school.list[i], " - ","Chronic Absenteeism Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
+ #   ggsave(here("output",save.folder ,paste0(school.list[i], " - ","Chronic Absenteeism Student Group Results 2023 and 2024 Comparison ", if_else(old.culrs == TRUE, "old colors ",""), Sys.Date(),".png")), width = 8, height = 5)
     
 }
 
@@ -639,6 +801,8 @@ chron.hs.schools <- function(df) {
                                   "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
                                   "Hispanic" ~ "Latino",
                                   "EnglishLearner" ~ "English \nLearner",
+                                  "LTEL" ~ "Long Term\nEnglish\nLearner",
+                                  
                                   "Black/African Am" ~ "Black/\nAfrican Am",
                                   "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                                   "Multiple" ~ "Multiple \nRaces",
@@ -670,12 +834,12 @@ chron.hs.schools <- function(df) {
             scale_fill_identity() +
             scale_color_identity() +
             labs(y = "Chronic Absenteeism Rate",
-                 title = paste0(skul, " - Chronic Absenteeism Student Group Estimates 2024"),
+                 title = paste0(skul, " - Chronic Absenteeism Student Group Estimates ", thisyear),
                  # subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color"
             )
 
 
-        ggsave(here("output",save.folder ,paste0(skul," Chronic Estimates 2024 ", Sys.Date(),".png")), width = 8, height = 5)
+        ggsave(here("output",save.folder ,paste0(skul," Chronic Estimates ", thisyear, Sys.Date(),".png")), width = 8, height = 5)
         
 
     }
@@ -812,6 +976,8 @@ working <- read_sheet(ss = sheet,
                               "SocioEconomicallyDisadvantaged" ~ "Socio-Economically \nDisadvantaged",
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                               "Multiple" ~ "Multiple \nRaces",
@@ -884,6 +1050,154 @@ chron.all.schools(mpusd.abs.school.joint , dist.cd = 66092)
 # 
 # 
 # run.all.chronic(mpusd.abs.24, mpusd.demo.24,"Monterey Peninsula", 66092 )
+
+
+
+
+### BY Grade level by site ------
+
+nmcusd.abs.school.joint <- chr.joint.school(nmcusd.abs.24, nmcusd.demo.24, "North Monterey County" , FALSE)
+
+
+nmcusd.abs.school.long <- nmcusd.abs.school.joint %>%
+    pivot_longer(cols = c(Homeless:All)) %>%
+    filter(value == "Yes")
+
+nmcusd.abs.school.sum <- nmcusd.abs.school.long %>%
+    group_by(
+        SchoolName,
+        name,
+    #    Grade
+        ) %>%
+    summarise(perc = 100*mean(chronic),
+              n = n()) %>%
+    mutate(
+        #Grade = factor(Grade, levels = c("TK","KN", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")),
+         #  Grade = fct_relevel(Grade, "TK","KN"),
+           name = str_replace(name, "/", " - ")
+           )
+
+
+
+
+# 
+# nmcusd.abs.school.sum %>%
+#     filter(name == "All",
+#            n >=10) %>%
+#     lollipop( perc, Grade, "pink")
+# 
+# ggsave(here("output",save.folder,"chronic","example 1.png"))
+
+colorme <- "seagreen"
+
+
+for (i in unique(nmcusd.abs.school.sum$name)) {
+    
+nmcusd.abs.school.sum %>%
+    filter(name == i,
+           n >=10) %>%
+ggplot2::ggplot( aes( y = perc/100,
+                      x = Grade, #forcats::fct_reorder(District_Name,Percentage_Standard_Met_and_Above) ,
+                      label = scales::percent(perc/100, accuracy = .1))) +
+    geom_segment( aes(x= Grade, #forcats::fct_reorder(District_Name, Percentage_Standard_Met_and_Above/100),
+                      xend= Grade, #forcats::fct_reorder(District_Name, Percentage_Standard_Met_and_Above/100),
+                      y=0,
+                      yend=perc/100),
+                  color=colorme,
+                  size =2 ) +
+    geom_point( color=colorme, size=5, alpha=0.6) +
+    coord_flip() +
+    geom_text(size = 3, color = "black") +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    #  facet_grid(facets = vars(`Student Group`), scales = "free" ) +
+    theme_hc() +
+    mcoe_theme +
+        labs(title = paste0("2023-24 Chronic Absenteeism Rates by Grade for ",i, " students"))
+    
+ ggsave(here("output",save.folder, "chronic" , paste0("2023-24 Chronic Absenteeism Rates by Grade for ",i,".png")), width = 8, height = 4.5 )
+
+}
+
+
+
+for (i in unique(nmcusd.abs.school.sum$Grade)) {
+    
+
+nmcusd.abs.school.sum %>%
+    filter(Grade == i,
+           n >=10) %>%
+    lollipop( perc, name, "orange")+
+        labs(title = paste0("2023-24 Chronic Absenteeism Rates by Student Group for Grade ",i))
+    
+
+ggsave(here("output",save.folder, "chronic" , paste0("2023-24 Chronic Absenteeism Rates by Student Group for ",i,".png")), width = 8, height = 4.5 )
+
+}
+
+
+
+
+
+
+
+for (i in unique(nmcusd.abs.school.sum$SchoolName)) {
+    
+    
+    colorme <- "bisque4"
+    
+    nmcusd.abs.school.sum %>%
+        filter(SchoolName == i,
+               n >=10) %>%
+        ggplot2::ggplot( aes( y = perc/100,
+                              x = Grade, #forcats::fct_reorder(District_Name,Percentage_Standard_Met_and_Above) ,
+                              label = scales::percent(perc/100, accuracy = .1))) +
+        geom_segment( aes(x= Grade, #forcats::fct_reorder(District_Name, Percentage_Standard_Met_and_Above/100),
+                          xend= Grade, #forcats::fct_reorder(District_Name, Percentage_Standard_Met_and_Above/100),
+                          y=0,
+                          yend=perc/100),
+                      color=colorme,
+                      size =2 ) +
+        geom_point( color=colorme, size=5, alpha=0.6) +
+        coord_flip() +
+        geom_text(size = 3, color = "black") +
+        scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+        #  facet_grid(facets = vars(`Student Group`), scales = "free" ) +
+        theme_hc() +
+        mcoe_theme +
+        labs(title = paste0("2023-24 Chronic Absenteeism Rates by Grade for ",i))
+    
+    ggsave(here("output",save.folder, "chronic" , paste0("2023-24 Chronic Absenteeism Rates by Grade for ",i,".png")), width = 8, height = 4.5 )
+    
+}
+
+
+
+
+
+
+for (i in unique(nmcusd.abs.school.sum$SchoolName)) {
+    
+    
+    nmcusd.abs.school.sum %>%
+        filter(SchoolName == i,
+               n >=10) %>%
+        lollipop( perc, name, "cyan")+
+        labs(title = paste0("2023-24 Chronic Absenteeism Rates by Student Group for ",i))
+    
+    
+    ggsave(here("output",save.folder, "chronic" , paste0("2023-24 Chronic Absenteeism Rates by Student Group for ",i,".png")), width = 8, height = 4.5 )
+    
+}
+
+
+nmcusd.curr <- read_xlsx(here("data", "nmcusd" ,"2024-2025 NMCUSD Weekly Student Attendance_8.14-10.11.xlsx"))
+
+
+
+
+
+
+
 
 
 ##### END -------

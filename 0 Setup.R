@@ -13,10 +13,15 @@ library(janitor)
 library(readxl)
 library(ggthemes)
 library(googlesheets4)
+library(ggpattern)
 
 options(scipen=999)
 
 con <- mcoe_sql_con()
+
+yr <- 2025
+thisyear <- as.character(yr)
+lastyear <- as.character(yr - 1)
 
 # 2022 Google Sheet 
 # sheet <- "https://docs.google.com/spreadsheets/d/1iS2Sd37hU7LYzakI2fbiotnzYn60cVp0d0pMB9k6zXk/edit#gid=0"
@@ -25,15 +30,17 @@ con <- mcoe_sql_con()
 # sheet <- "https://docs.google.com/spreadsheets/d/1E7x2W-bWkZGenZTPVmlyGSl0LQPfrHc2s8ZLILKUOGw/edit#gid=0"
 
 # 2024 Google Sheet
-sheet <- "https://docs.google.com/spreadsheets/d/1RSRPRRqcS8tOg7-uXG6dFgoHwn4dcAitBjfrnhkFYHA/edit?gid=0#gid=0"
+# sheet <- "https://docs.google.com/spreadsheets/d/1RSRPRRqcS8tOg7-uXG6dFgoHwn4dcAitBjfrnhkFYHA/edit?gid=0#gid=0"
+
+sheet <- "https://docs.google.com/spreadsheets/d/1H6KKTvh43LBK7Zl8hMnnE9BpJXUUe1tUPnyahUyWecY/edit?gid=0#gid=0"
 
 
-
-dash <- tbl(con,"DASH_ALL") %>%
+dash.all <- tbl(con,"DASH_ALL") %>%
     filter(countyname == "Monterey",
          #  rtype == "D",
            #        indicator == "ela" | indicator == "math",
-           reportingyear == "2023") %>%
+        #   reportingyear == "2023"
+         ) %>%
     collect()  %>%
     mutate(Group = case_match(studentgroup,
                               "HOM" ~ "Homeless",
@@ -41,6 +48,8 @@ dash <- tbl(con,"DASH_ALL") %>%
                               "SED" ~ "Socio-Economically \nDisadvantaged",
                               "HI" ~ "Latino",
                               "EL" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              "AI" ~  "American\nIndian/\nAlaska\nNative",
                               "AS" ~ "Asian",
                               "FI" ~ "Filipino",
                               "WH" ~ "White",

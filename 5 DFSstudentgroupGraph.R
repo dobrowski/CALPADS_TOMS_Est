@@ -9,6 +9,8 @@ working <- read_sheet(ss = sheet,
                               "SWD" ~ "Students with \nDisabilities",
                               "SED" ~ "Socio-Economically \nDisadvantaged",
                               "HispanicOrLatinoEthnicity" ~ "Latino",
+                              "AmericanIndianorAlaskaNative" ~ "American\nIndian/\nAlaska\nNative",
+                              "LTELdash" ~ "Long Term\nEnglish\nLearner",
                               "ELdash" ~ "English \nLearner",
                               "BlackorAfricanAmerican" ~ "Black/\nAfrican Am",
                               "HawaiianOrOtherPacificIslander" ~ "Pacific Islander",
@@ -28,6 +30,9 @@ working <- working %>%
 ### functions ----
 dfs.graph <- function(dist, assessment = "ELA", dist.name ) {
     
+  thisyear <- as.character(yr)
+  lastyear <- as.character(yr - 1)
+  
     work.group <-   working %>%
         select(Group) %>%
         unique() %>%
@@ -48,10 +53,10 @@ working %>%
     scale_fill_identity() +
     scale_color_identity() +
     labs(y = "Distance from Standard",
-         title = paste0(dist.name," - ",assessment," CAASPP Student Group Results 2024"))
+         title = paste0(dist.name," - ",assessment," CAASPP Student Group Results ", thisyear ,""))
 
 
-ggsave(here("output",save.folder ,paste0(dist.name, " - ",assessment," CAASPP Student Group Results 2024 ", Sys.Date(),".png")), width = 8, height = 5)    
+ggsave(here("output",save.folder ,paste0(dist.name, " - ",assessment," CAASPP Student Group Results ", thisyear ," ", Sys.Date(),".png")), width = 8, height = 5)    
 
 }
 
@@ -100,6 +105,10 @@ caaspp.mry2 <- caaspp.mry %>%
 dfs.comp <- function(dist, assessment = "ELA", dist.name , limit.case.count = TRUE, old.colors = FALSE) {
     
     
+  thisyear <- as.character(yr)
+  lastyear <- as.character(yr - 1)
+  
+  
 work.group <-   working %>%
          filter(District == dist,
                 Test == assessment) %>%
@@ -109,8 +118,9 @@ work.group <-   working %>%
     
     ass2 <- str_to_upper(assessment) 
     
-    dash2 <- dash %>%
+    dash2 <- dash.all %>%
         filter(str_detect(districtname, dist.name),
+               reportingyear == yr - 1, 
                rtype == "D",
                indicator == ass2,
                Group %in% work.group
@@ -149,21 +159,22 @@ work.group <-   working %>%
                              pattern = year,
                      color = "black"),
                  position = "dodge2") +
-        scale_pattern_manual(values=c('wave', 'wave')) +
+        {if(old.colors==TRUE)scale_pattern_manual(values=c('stripe', 'wave'))else scale_pattern_manual(values=c('wave', 'wave'))    } +
         mcoe_theme +
         {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         scale_fill_identity() +
         scale_color_identity() +
         theme(legend.position = "none") +
         labs(y = "Distance from Standard",
-             title = paste0(dist.name," - ",assessment," CAASPP Student Group Results 2024"),
+             title = paste0(dist.name," - ",assessment," CAASPP Student Group Results ",thisyear),
              subtitle = if_else(old.colors == FALSE,
-                                "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color",
-                                "2023 results are on the left and 2024 estimates are on the right for each student group")
+                                paste0("Gray is ", lastyear ," results and Colored bars are ", thisyear ," with the estimated Dashboard color"),
+                                paste0(lastyear ," results are on the left and ", thisyear ," estimates are on the right for each student group")
+             )
              )
     
     
-    ggsave(here("output",save.folder ,paste0(dist.name, " - ",assessment," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)    
+    ggsave(here("output",save.folder ,paste0(dist.name, " - ",assessment," CAASPP Student Group Results ", lastyear ," and ", thisyear ," Comparison ", if_else(old.colors == TRUE, "old colors ","") ,Sys.Date(),".png")), width = 8, height = 5)    
     
 }
 
@@ -184,15 +195,45 @@ dfs.comp(dist = "mpusd.24",
 #### School level versions -------
 
 
+dash.district <- function(cdsCode, yer = yr-1) {
+  
+  dash.all %>%
+    filter(countyname == "Monterey",
+           cds == cdsCode,
+           rtype == "D",
+ #          indicator == "ELA" | indicator == "MATH",
+           reportingyear == as.character(yer) ) %>%
+    collect()  %>%
+    mutate(Group = case_match(studentgroup,
+                              "HOM" ~ "Homeless",
+                              "SWD" ~ "Students with \nDisabilities",
+                              "SED" ~ "Socio-Economically \nDisadvantaged",
+                              "HI" ~ "Latino",
+                              "EL" ~ "English \nLearner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              "AA" ~ "Black/\nAfrican Am",
+                              "AI" ~ "American\nIndian/\nAlaska\nNative",
+                              "AS" ~ "Asian",
+                              "FI" ~ "Filipino",
+                              "WH" ~ "White",
+                              "MR" ~ "Multiple \nRaces",
+                              "PI" ~ "Pacific Islander",
+                              
+                              "ALL" ~ "All",
+                              .default = studentgroup
+    ))
+  
+}
 
-dash.school <- function(cdsCode) {
+
+dash.school <- function(cdsCode, yer = yr-1) {
     
-    dash %>%
+    dash.all %>%
     filter(countyname == "Monterey",
            cds == cdsCode,
            rtype == "S",
            indicator == "ELA" | indicator == "MATH",
-           reportingyear == "2023") %>%
+           reportingyear == yer) %>%
         collect()  %>%
     mutate(Group = case_match(studentgroup,
                               "HOM" ~ "Homeless",
@@ -200,6 +241,10 @@ dash.school <- function(cdsCode) {
                               "SED" ~ "Socio-Economically \nDisadvantaged",
                               "HI" ~ "Latino",
                               "EL" ~ "English Learner",
+                              "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              
+                              "AI" ~ "American\nIndian/\nAlaska\nNative",
+                              "MR" ~ "Multiple \nRaces",
                               "AS" ~ "Asian",
                               "FI" ~ "Filipino",
                               "WH" ~ "White",
@@ -211,10 +256,14 @@ dash.school <- function(cdsCode) {
     
 temp <- dash.school(school.list[2])
 
+dash.school(27754406026678, yer = "2022")
+
+
 
 
 dfs.school.graph <- function(df) {
     
+  thisyear <- as.character(yr)
     
     work.group <-   df %>%
         select(Group) %>%
@@ -236,12 +285,12 @@ dfs.school.graph <- function(df) {
         scale_fill_identity() +
         scale_color_identity() +
         labs(y = "Distance from Standard",
-             title = paste0(skul, " - ", ass," CAASPP Student Group Estimates 2024"),
+             title = paste0(skul, " - ", ass," CAASPP Student Group Estimates ", thisyear ,""),
   #           subtitle = "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color"
              )
     
     
-    ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results 2024 ", Sys.Date(),".png")), width = 8, height = 5)
+    ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results ", thisyear ," ", Sys.Date(),".png")), width = 8, height = 5)
     
     
 } 
@@ -305,7 +354,7 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
     
     
 
-    df %>%
+ df2<-   df %>%
         filter(CDS == cds,
                Test == assessment,
  #              count >= 30
@@ -390,7 +439,15 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
             
             )
     
-    
+ # Posts to google sheet
+ sheet_append(ss = sheet,
+              sheet = "DFS Comp School",
+              data = df2 )
+ 
+ 
+ 
+ 
+ df2
     
     
 }
@@ -398,6 +455,8 @@ dfs.comp.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE
 
 dfs.comp.school.graph <- function(df, old.colors = FALSE) {
     
+  thisyear <- as.character(yr)
+  lastyear <- as.character(yr - 1)
     
     work.group <-   df %>%
         select(Group) %>%
@@ -414,7 +473,7 @@ dfs.comp.school.graph <- function(df, old.colors = FALSE) {
                              pattern = year,
                      color = "black"),
                  position = "dodge2") +
-        scale_pattern_manual(values=c('wave', 'wave')) +
+        {if(old.colors==TRUE)scale_pattern_manual(values=c('stripe', 'wave'))else scale_pattern_manual(values=c('wave', 'wave'))    } +
         
         {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
         mcoe_theme +
@@ -423,21 +482,28 @@ dfs.comp.school.graph <- function(df, old.colors = FALSE) {
         theme(legend.position = "none") +
         
         labs(y = "Distance from Standard",
-             title = paste0(skul, " - ", ass," CAASPP Student Group Estimates 2024"),
+             title = paste0(skul, " - ", ass," CAASPP Student Group Estimates ", thisyear ,""),
              subtitle = if_else(old.colors == FALSE,
-                                "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color",
-                                "2023 results are on the left and 2024 estimates are on the right for each student group")
+                                paste0("Gray is ", lastyear, " results and Colored bars are ", thisyear ," with the estimated Dashboard color"),
+                                paste0("", lastyear, " results are on the left and ", thisyear ," estimates are on the right for each student group")
+                                )
         )
     
 
-    ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results 2023 and 2024 Comparison ", Sys.Date(),".png")), width = 8, height = 5)
+    ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results ", lastyear, " and ", thisyear ," Comparison ", if_else(old.colors == TRUE, "old colors ","") , Sys.Date(),".png")), width = 8, height = 5)
     
     
 } 
 
 
+dfs.comp.school(suhsd.24, cds = 27661592734481,assessment = "ELA", limit.case.count = TRUE, old.colors = TRUE )
 
-temp <- dfs.comp.school(df = holder, cds = 27660926026256, assessment = "Math")
+
+
+
+
+
+temp <- dfs.comp.school(df = holder, cds = 27660680141010, assessment = "Math")
 
 temp %>% dfs.comp.school.graph()
 
@@ -446,6 +512,104 @@ temp %>% dfs.school.graph()
 
 temp <- dfs.comp.school(df = holder, cds = 27660922732253, assessment = "ELA", limit.case.count = FALSE) %>% 
     dfs.comp.school.graph()
+
+### Three year ----
+
+
+dfs.3yr.school <- function(df, cds, assessment = "ELA", limit.case.count = TRUE, old.colors = FALSE ) {
+    
+ dfs.2yr <-  dfs.comp.school(df, cds, assessment, limit.case.count, old.colors )
+    
+
+    work.group <-   df %>%
+        filter(CDS == cds,
+               Test == assessment,
+               #           count >= 30
+        ) %>%
+        filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
+        #     {if(limit.case.count == TRUE )filter(count >= 30 ) } %>%
+        ungroup() %>%
+        select(Group) %>%
+        unique() %>%
+        flatten()
+
+    ass2 <- str_to_upper(assessment)
+    
+    dash3 <- dash.school( cds , yr = "2022") %>%
+        filter(# str_detect(districtname, dist.name),
+            indicator == ass2,
+            Group %in% work.group
+        ) %>%
+        select(districtname, indicator, currstatus, color ,Group) %>%
+        rename(DFS = currstatus) %>%
+        mutate(year = "2022")
+    
+    
+    
+    
+    
+    df3<-   dfs.2yr %>%
+        bind_rows(dash3) %>%
+        mutate(year = case_match(year,
+                                 "2022" ~ "2022",
+                                 "1old" ~ yr-1,
+                                 "2new" ~ yr),
+            year = factor(year, levels = c("2022","2023","2024", "2025")),
+        )
+
+    df3
+}
+
+
+
+temp <- dfs.3yr.school(df = holder, cds = 27659616025977, assessment = "Math")
+
+
+
+dfs.3yr.school.graph <- function(df) {
+    
+    
+    skul <- df$SchoolName[1]
+    ass <- df$Test[1]
+    
+    df %>%
+        ggplot(aes(x = year, y = DFS, label = round(DFS,1), color = Group, group = Group)) +
+        #        ggplot(aes(x = fct_reorder(Group,DFS), y = DFS)) +
+        geom_line(size = 3) +
+        geom_point(size = 5) +
+        expand_limits(y = 0) +
+        geom_text(color = "black",
+                  vjust = -1) +
+        geom_blank( aes(x=year, y=DFS*1.1, label=DFS)) +
+        scale_color_brewer(type = "qual",palette = 2) +
+        
+        facet_wrap(~Group) +
+        mcoe_theme  +
+         theme(legend.position = "none") +
+
+        labs(y = "Distance from Standard",
+             title = paste0(skul, " - ", ass," CAASPP Over Time"),
+             # subtitle = if_else(old.colors == FALSE,
+             #                    "Gray is 2023 results and Colored bars are 2024 with the estimated Dashboard color",
+             #                    "2023 results are on the left and 2024 estimates are on the right for each student group")
+       )
+    
+    
+#    ggsave(here("output",save.folder ,paste0(skul, " - ",ass," CAASPP Student Group Results 2023 and 2024 Comparison ", if_else(old.colors == TRUE, "old colors ","") , Sys.Date(),".png")), width = 8, height = 5)
+    
+    
+} 
+
+dfs.3yr.school.graph(temp)
+
+
+
+
+
+
+
+
+
 
 
 ### All Schools in District ------
