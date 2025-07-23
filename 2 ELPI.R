@@ -528,7 +528,71 @@ elpi.change("King City",
             ,
             "King City KG to 5th")
 
+#### New elpi Graph  -------
 
 
+
+
+
+
+
+elpi.school.graph <- function(skul) {
+    
+    
+    working <- working %>%
+        filter(# str_detect(df,district.df), 
+               (studentgroup == "EL" & count >= 30) | (studentgroup == "LTEL" & count >= 15),
+               School  == skul
+               ) %>%
+        pivot_longer(cols = c(`Estimated ELPI`,`old ELPI`)) %>%
+        mutate(color = if_else(name == "Estimated ELPI", `Estimated Color`,`old color`),
+               value = value*100) %>%
+        mutate(               year = factor(name),
+                              year = fct_relevel(year,"old ELPI" ) ,)
+
+    working %>%
+        ggplot(aes(x = studentgroup, y = value, group = year)) +
+        geom_col_pattern(aes(fill = color,
+                             pattern = year,
+                             color = "black"),
+                         position = "dodge2") +
+        scale_pattern_manual(values=c('stripe', 'wave')) +
+     #   {if(length(work.group) >=8 )scale_x_discrete(guide = guide_axis(n.dodge = 2))} + #Fixes the overlapping axis labels to make them alternate if lots of columns
+        mcoe_theme +
+        scale_fill_identity() +
+        scale_color_identity() +
+        theme(legend.position = "none") +
+        labs(y = "ELPI Percentage",
+             title = paste0(skul, " - English Learner Progress Estimates ", thisyear),
+                      subtitle =  paste0("", lastyear, " results are on the left and ", thisyear ," estimates are on the right for each student group")
+
+        )
+    
+    
+   ggsave(here("output",save.folder ,paste0(skul," ELPI Results ", thisyear, Sys.Date(),".png")), width = 8, height = 5)
+
+} 
+
+ elpi.school.graph("King City Union")
+
+
+ 
+working <- read_sheet(ss = sheet,
+            sheet = "ELPI")
+ 
+
+
+school.list <- working %>% 
+    filter(str_detect(District, "King City" )) %>%
+    select(School) %>%
+    unique() %>% unlist()
+ 
+ for (i in school.list) {
+     
+     elpi.school.graph( i)
+     
+ }
+ 
+ 
 
 

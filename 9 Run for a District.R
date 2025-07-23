@@ -2,7 +2,7 @@
 # Used to run for a district for all indicators available 
 
 # Set district name for folder to same images 
-save.folder <- "soledad"
+save.folder <- "washington"
 
 print(save.folder)
 
@@ -58,7 +58,15 @@ lagunita.24 <- read_xlsx(here("data","lagunita", "27660760000000_CAASPP_Student_
 
 mcoe.24 <- read_xlsx(here("data","mcoe", "27102720000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
                      skip = 1)
-mcoe.24 <- mcoe.24 %>%
+mcoe.25 <- mcoe.25 %>%
+  filter(!str_detect(CALPADSSchoolName,"Special"),
+         !str_detect(CALPADSSchoolName,"Charter")) %>%
+  use.TOMS()
+
+
+mcoe.25 <- read_xlsx(here("data","mcoe", "2025" ,"27102720000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                     skip = 1)
+mcoe.25 <- mcoe.25 %>%
   filter(!str_detect(CALPADSSchoolName,"Special"),
          !str_detect(CALPADSSchoolName,"Home")) %>%
   use.TOMS()
@@ -67,6 +75,11 @@ mcoe.24 <- mcoe.24 %>%
 mission.24 <- read_xlsx(here("data","mission", "27660840000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
                         skip = 1) %>%
   use.TOMS()
+
+mission.25 <- read_xlsx(here("data","mission", "2025" , "27660840000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                        skip = 1) %>%
+  use.TOMS()
+
 
 
 
@@ -150,6 +163,10 @@ wash.24 <- read_xlsx(here("data","washington", "27662330000000_CAASPP_Student_Sc
     use.TOMS()
 
 
+wash.25 <- read_xlsx(here("data","washington", "2025" ,"27662330000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                     skip = 1) %>%
+  use.TOMS()
+
 
 ### Load TOMS ELPAC results -----
 
@@ -185,6 +202,12 @@ kingcity.elpac.25 <- read_xlsx(here("data","king city","2025" ,"27660500000000_S
                                skip = 1
 )
 
+
+
+mission.elpac.25 <- read_xlsx(here("data","mission","2025" ,"27660840000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                               skip = 1
+)
+
 mpusd.elpac.24 <- read_xlsx(here("data","mpusd","27660920000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2024 (1).xlsx"),
                             skip = 1
 )
@@ -198,6 +221,10 @@ nmcusd.elpac.24 <- read_xlsx(here("data","nmcusd","27738250000000_Summative_ELPA
                              skip = 1
 )
 
+
+nmcusd.elpac.25 <- read_xlsx(here("data","nmcusd", "2025" ,"27738250000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                             skip = 1
+)
 
 
 
@@ -222,6 +249,11 @@ soledad.elpac.24 <- read_xlsx(here("data","soledad","27754400000000_Summative_EL
                               skip = 1
 )
 
+soledad.elpac.25 <- read_xlsx(here("data","soledad","2025" ,"27754400000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                              skip = 1
+)
+
+
 somoco.elpac.24 <- read_xlsx(here("data","somoco","ELPAC2024.xlsx")
 )
 
@@ -229,6 +261,11 @@ somoco.elpac.24 <- read_xlsx(here("data","somoco","ELPAC2024.xlsx")
 wash.elpac.24 <- read_xlsx(here("data","washington","27662330000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
                                 skip = 1
 )
+
+wash.elpac.25 <- read_xlsx(here("data","washington", "2025" ,"27662330000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_EnrolledStudentScoreData_2025.xlsx"),
+                           skip = 1
+)
+
 
 
 ### Load CALPADS files ------
@@ -365,49 +402,49 @@ suhsd.2023.grad.24 <- read_csv(here("data", "suhsd" , "15.2 - Cohort Outcome - S
 #### CAASPP Analysis ----
 
 
-graph.wrap(mpusd.25)
-graph.grid(mpusd.25)
-save.overall(mpusd.25)
-save.wrap(mpusd.25)
-save.grid(mpusd.25)
+graph.wrap(wash.25)
+graph.grid(wash.25)
+save.overall(wash.25)
+save.wrap(wash.25)
+save.grid(wash.25)
 
 
-passing.perc(mpusd.25)
+passing.perc(wash.25)
 
-dfs.w.change(mpusd.25, 27660920000000) # Remember to update the cds code
+dfs.w.change(wash.25, 27662330000000) # Remember to update the cds code
 
-student.group.size(mpusd.25, limit.30 = TRUE) %>% print(n = 30)
+student.group.size(wash.25, limit.30 = TRUE) %>% print(n = 30)
 
 
-pme2(mpusd.25,HispanicOrLatinoEthnicity)
-pme2(mpusd.25,SWD)
-pme2(mpusd.25,HOM)
- pme2(mpusd.25,SED)
- pme2(mpusd.25,Asian)
- pme2(mpusd.25,HawaiianOrOtherPacificIslander)
-# pme2(mpusd.25, AmericanIndianorAlaskaNative)
- pme2(mpusd.25,Filipino)
- pme2(mpusd.25,BlackorAfricanAmerican)
- pme2(mpusd.25,White)
- pme2(mpusd.25,TwoorMoreRaces)
- pme2(mpusd.25,ELdash)
- pme2(mpusd.25,LTELdash)
+pme2(wash.25,HispanicOrLatinoEthnicity)
+ pme2(wash.25,SWD)
+# pme2(mpusd.25,HOM)
+ pme2(wash.25,SED)
+#  pme2(mpusd.25,Asian)
+#  pme2(mpusd.25,HawaiianOrOtherPacificIslander)
+# # pme2(mpusd.25, AmericanIndianorAlaskaNative)
+#  pme2(mpusd.25,Filipino)
+#  pme2(mpusd.25,BlackorAfricanAmerican)
+  pme2(wash.25,White)
+  pme2(wash.25,TwoorMoreRaces)
+#  pme2(mpusd.25,ELdash)
+#  pme2(mpusd.25,LTELdash)
  
 
- dfs2(mpusd.25,HispanicOrLatinoEthnicity)
- dfs2(mpusd.25,SWD)
- dfs2(mpusd.25,HOM)
- dfs2(mpusd.25 ,SED)
-# dfs2(mpusd.25, AmericanIndianorAlaskaNative)
-dfs2(mpusd.25,Filipino)
-dfs2(mpusd.25,White)
-dfs2(mpusd.25,TwoorMoreRaces)
- dfs2(mpusd.25,ELdash)
- dfs2(mpusd.25,LTELdash)
- dfs2(mpusd.25,Asian)
-# dfs2(mpusd.25,MigrantStatus)
- dfs2(mpusd.25,BlackorAfricanAmerican)
- dfs2(mpusd.25,HawaiianOrOtherPacificIslander)
+ dfs2(wash.25,HispanicOrLatinoEthnicity)
+  dfs2(wash.25,SWD)
+ # dfs2(mpusd.25,HOM)
+ dfs2(wash.25 ,SED)
+# # dfs2(mpusd.25, AmericanIndianorAlaskaNative)
+# dfs2(mpusd.25,Filipino)
+ dfs2(wash.25,White)
+ dfs2(wash.25,TwoorMoreRaces)
+#  dfs2(mpusd.25,ELdash)
+#  dfs2(mpusd.25,LTELdash)
+#  dfs2(mpusd.25,Asian)
+# # dfs2(mpusd.25,MigrantStatus)
+#  dfs2(mpusd.25,BlackorAfricanAmerican)
+#  dfs2(mpusd.25,HawaiianOrOtherPacificIslander)
  
 
 # Check out the sheet and make sure there are not duplicates or incompletes 
@@ -439,32 +476,32 @@ working <- working %>%
 
 
 
-dfs.graph(dist = "mpusd.25",
+dfs.graph(dist = "wash.25",
           assessment = "ELA",
-          dist.name = "Monterey Peninsula"
+          dist.name = "Washington Union"
           )
 
-dfs.graph(dist = "mpusd.25",
+dfs.graph(dist = "wash.25",
           assessment = "Math",
-          dist.name = "Monterey Peninsula"
+          dist.name = "Washington Union"
 )
 
-dfs.comp(dist = "mpusd.25",
+dfs.comp(dist = "wash.25",
          assessment = "ELA",
-         dist.name = "Monterey Peninsula"
+         dist.name = "Washington Union"
          ,         old.colors = TRUE)
 
-dfs.comp(dist = "mpusd.25",
+dfs.comp(dist = "wash.25",
          assessment = "Math",
-         dist.name = "Monterey Peninsula"
+         dist.name = "Washington Union"
          ,         old.colors = TRUE)
 
 
 
 
 
-school.split <-  soledad.25  %>%
-    filter(str_detect(CALPADSDistrictName,"Soledad")) 
+school.split <-  wash.25  %>%
+    filter(str_detect(CALPADSDistrictName,"Washington")) 
 
 
 holder <-    school.split %>%
@@ -510,30 +547,30 @@ for (i in 1:length(school.list)) {
 
 
 
-elpi.calc(mpusd.elpac.25 #%>%
+elpi.calc(wash.elpac.25 #%>%
           #   filter(str_detect(TestedSchoolName1,"Prune"))
           , "D"
 )
 
-elpi.calc(mpusd.elpac.25 #%>%
+elpi.calc(nmcusd.elpac.25 #%>%
           #   filter(str_detect(TestedSchoolName1,"Prune"))
           , "D", "LTEL"
 )
 
-school.list <- mpusd.elpac.25 %>%
-  filter(str_detect(CALPADSDistrictName,"Peninsula")) %>%
+school.list <- nmcusd.elpac.25 %>%
+  filter(str_detect(CALPADSDistrictName,"North")) %>%
   select(TestedSchoolName1) %>%
   unlist() %>%
   unique()
 
 
 for (i in school.list) {
-    elpi.calc(mpusd.elpac.25%>%
+    elpi.calc(nmcusd.elpac.25%>%
                   filter(str_detect(TestedSchoolName1,i)),
               "S"
     )
     
-  elpi.calc(mpusd.elpac.25%>%
+  elpi.calc(nmcusd.elpac.25%>%
               filter(str_detect(TestedSchoolName1,i)),
             "S", "LTEL"
   )
@@ -542,6 +579,23 @@ for (i in school.list) {
 }
 
 
+
+
+working <- read_sheet(ss = sheet,
+                      sheet = "ELPI")
+
+
+
+school.list <- working %>% 
+  filter(str_detect(District, "North" )) %>%
+  select(School) %>%
+  unique() %>% unlist()
+
+for (i in school.list) {
+  
+  elpi.school.graph( i)
+  
+}
 
 
 
