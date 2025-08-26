@@ -105,6 +105,7 @@ chronic.group.rate.w.change <- function(df, studentgroup, cds) {
                             "Hispanic" ~ "Latino",
                             "EnglishLearner" ~ "English \nLearner",
                             "LTEL" ~ "Long Term\nEnglish\nLearner",
+                            "Am Indian/Alskn Nat" ~ "American\nIndian/\nAlaska\nNative",
                             
                             "Black/African Am" ~ "Black/\nAfrican Am",
                             "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
@@ -238,6 +239,7 @@ working <- read_sheet(ss = sheet,
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
                               "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              "Am Indian/Alskn Nat" ~ "American\nIndian/\nAlaska\nNative",
                               
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
@@ -445,7 +447,7 @@ add.school.car <- function(df) {
       
               bind_rows( car.school(df,Asian) )  %>%
         bind_rows( car.school(df,Filipino) )  %>%
-#        bind_rows( car.school(df,Multiple) )  %>%
+        bind_rows( car.school(df,Multiple) )  %>%
         bind_rows( car.school(df,`Black/African Am`) )  %>%
         bind_rows( car.school(df,`Am Indian/Alskn Nat`) )  %>%
         bind_rows( car.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
@@ -493,6 +495,7 @@ holder <- mpusd.abs.school.joint %>%
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
                               "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              "Am Indian/Alskn Nat" ~ "American\nIndian/\nAlaska\nNative",
                               
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
@@ -705,6 +708,7 @@ holder <- df %>%
                               "Hispanic" ~ "Latino",
                               "EnglishLearner" ~ "English \nLearner",
                               "LTEL" ~ "Long Term\nEnglish\nLearner",
+                              "Am Indian/Alskn Nat" ~ "American\nIndian/\nAlaska\nNative",
                               
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
@@ -802,6 +806,8 @@ chron.hs.schools <- function(df) {
                                   "Hispanic" ~ "Latino",
                                   "EnglishLearner" ~ "English \nLearner",
                                   "LTEL" ~ "Long Term\nEnglish\nLearner",
+                                  "Am Indian/Alskn Nat" ~ "American\nIndian/\nAlaska\nNative",
+                                  
                                   
                                   "Black/African Am" ~ "Black/\nAfrican Am",
                                   "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",

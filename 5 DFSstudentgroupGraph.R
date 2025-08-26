@@ -232,7 +232,7 @@ dash.school <- function(cdsCode, yer = yr-1) {
     filter(countyname == "Monterey",
            cds == cdsCode,
            rtype == "S",
-           indicator == "ELA" | indicator == "MATH",
+           indicator %in% c("ELA","MATH","SCIENCE" ),
            reportingyear == yer) %>%
         collect()  %>%
     mutate(Group = case_match(studentgroup,

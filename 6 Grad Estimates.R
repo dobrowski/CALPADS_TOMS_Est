@@ -52,6 +52,8 @@ mcoe.school.grad <- mcoe.grad.24 %>%
                               "LTEL" ~ "Long Term\nEnglish\nLearner",
                               "Black/African Am" ~ "Black/\nAfrican Am",
                                          "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
+                              "TwoorMoreRaces" ~ "Multiple \nRaces",
+                              
                                          "Multiple" ~ "Multiple \nRaces",
                                          .default = name
                ))
@@ -70,7 +72,7 @@ grad.5th.joint <- cohort.old  %>%
     { if (level == "S") select(.,SchoolCode, SSID) else select(.,SSID)  }  %>%
     
     inner_join(completer.list) %>%
-    mutate(SchoolCode = (SchoolCode) ) %>%
+    mutate(SchoolCode = (SchoolCode) ) %>% # sometimes assumes wrongclass numeric/character
 { if (level == "D") select(.,-SchoolCode, -SchoolName) else . }%>%
     mutate(CohortCategory = "HSDiplomaGraduate",
            EnrollmentStatus = as.numeric(str_sub(EnrollmentStatus, 1,2  )),
@@ -127,16 +129,19 @@ school.grad <- cohort.new %>%
                               "Black/African Am" ~ "Black/\nAfrican Am",
                               "Nat Hwiin/Othr Pac Islndr" ~ "Pacific Islander",
                               "Multiple" ~ "Multiple \nRaces",
+                              "TwoorMoreRaces" ~ "Multiple \nRaces",
+                              "Two or More" ~ "Multiple \nRaces",
+                              
                               .default = name
            )) %>%
     add_column(!!!extra.cols[!names(extra.cols) %in% names(.)]) %>%
     select(district, SchoolCode, SchoolName, name, Group ,count, grad.rate)
 
-sheet_append(ss = sheet,
-             sheet = "Grad Group",
-             data = school.grad )
-
-school.grad
+# sheet_append(ss = sheet,
+#              sheet = "Grad Group",
+#              data = school.grad )
+# 
+ school.grad
 
 }
 
@@ -209,7 +214,7 @@ grad.comp <- function(df, dist.code, limit.case.count = TRUE, old.colors = TRUE 
     print(dash2)
     
     
-    df %>%
+    school.grad <-   df %>%
         # filter(SchoolCode == school.code # | SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         # ) %>%
         filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
@@ -242,18 +247,26 @@ grad.comp <- function(df, dist.code, limit.case.count = TRUE, old.colors = TRUE 
                    
                ),
                grad.rate = grad.rate.x
-        ) %>%
-        
-        mutate(year = "2new") %>%
-        
+        ) 
+    
+    
+    
+    
+    
+    sheet_append(ss = sheet,
+                 sheet = "Grad Group",
+                 data = school.grad )
+    
+    
+    school.grad %>%
+            mutate(year = "2new") %>%
         bind_rows(dash2) %>%
         mutate(EstimatedColor = factor(EstimatedColor),
                EstimatedColor = fct_relevel(EstimatedColor,"Light Gray" ) ,
                year = factor(year),
                year = fct_relevel(year,"1old" ) 
         )
-    
-    
+
 }
 
 
@@ -296,7 +309,7 @@ grad.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
     print(dash2)
     
     
-    df %>%
+    school.grad <-   df %>%
         filter(SchoolCode == school.code # | SchoolCode == as.numeric(str_pad(school.code, 7, side="left", pad="0"))
         ) %>%
         filter(if(limit.case.count == TRUE )count >= 30 else count >= 1) %>%
@@ -318,7 +331,7 @@ grad.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
                    grad.rate.x <=90.4 & change < 1.0 ~ "Yellow",
                    
                    grad.rate.x <=94.9 & change >= 5.0 ~ "Blue",
-                   grad.rate.x <=94.9 & change > -1.0 ~ "Green",
+                   grad.rate.x <=94.95 & change > -1.0 ~ "Green",
                    grad.rate.x <=94.9 & change < -5.0 ~ "Orange",    
                    grad.rate.x <=94.9 & change <= -1.0 ~ "Yellow",    
                    
@@ -329,7 +342,17 @@ grad.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
                    
                ),
                grad.rate = grad.rate.x
-        ) %>%
+        ) 
+    
+    
+    
+    
+    
+    sheet_append(ss = sheet,
+                 sheet = "Grad School Group",
+                 data = school.grad )
+    
+    school.grad %>%
         
         mutate(year = "2new") %>%
         
@@ -339,8 +362,7 @@ grad.comp.school <- function(df, dist.code, school.code, limit.case.count = TRUE
                year = factor(year),
                year = fct_relevel(year,"1old" ) 
                )
-    
-    
+
 }
 
 
@@ -370,6 +392,7 @@ grad.graph <- function(df) {
     skul <-  unique(df$districtname)[1]
     
     df %>%
+        unique() %>%
         filter(year == "2new") %>%
         ggplot(aes(x = Group, y = grad.rate)) +
         geom_col(aes(fill = EstimatedColor,
@@ -405,6 +428,7 @@ grad.school.graph <- function(df) {
     skul <- df$schoolname[1]
     
     df %>%
+        unique() %>%
         filter(!is.na(SchoolCode)) %>%
         ggplot(aes(x = Group, y = grad.rate)) +
         geom_col(aes(fill = EstimatedColor,
@@ -452,7 +476,7 @@ grad.comp.school.graph <- function(df, old.colors = TRUE, level = "S") {
         theme(legend.position = "none") +
         
         labs(y = "Graduation Rate",
-             title = paste0(skul, " Graduation Student Group Estimates 2024"),
+             title = paste0(skul, " Graduation Student Group Estimates ", thisyear),
              subtitle = if_else(old.colors == FALSE,
                                 paste0("Gray is ", lastyear, " results and Colored bars are ", thisyear ," with the estimated Dashboard color"),
                                 paste0("", lastyear, " results are on the left and ", thisyear ," estimates are on the right for each student group")
@@ -475,13 +499,13 @@ grad.comp.school(mcoe.school.grad, dist.code = 10272, school.code = 2730265, lim
 
 grad.all.schools <- function(df, dist.cd, limit.case.cnt = TRUE) {
     
-    school.list <- df$SchoolCode %>% unique()
+    school.list <- df$SchoolCode %>% unique() 
     
     for (i in 1:length(school.list)) {
         
         grad.df    <-    grad.comp.school(df, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt, old.colors = FALSE) 
         
-        grad.comp.school.graph(grad.df, old.colors = FALSE)
+   #     grad.comp.school.graph(grad.df, old.colors = FALSE)
         grad.school.graph(grad.df)
         
         grad.df.old    <-    grad.comp.school(df, dist.code = dist.cd, school.code = school.list[i], limit.case.count = limit.case.cnt, old.colors = TRUE) 

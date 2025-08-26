@@ -176,24 +176,44 @@ susp.group.rate.w.change <- function(df, studentgroup, cds) {
               
               
               # Elementary District
-              type == "ED" & perc.susp >=6.1 & change > -0.2 ~ "Red",
-              type == "ED" & perc.susp >=6.1 & change <= -2.0 ~ "Yellow",
-              type == "ED" & perc.susp >=6.1 & change <= -0.3 ~ "Orange",
+              type %in% c("ED") & perc.susp >=6.1 & change > -0.2 ~ "Red",
+              type %in% c("ED") & perc.susp >=6.1 & change <= -2.0 ~ "Yellow",
+              type %in% c("ED") & perc.susp >=6.1 & change <= -0.3 ~ "Orange",
               
-              type == "ED" & perc.susp >=3.1 & change >= 2.1 ~ "Red",
-              type == "ED" & perc.susp >=3.1 & change <= -0.3 ~ "Yellow", 
-              type == "ED" & perc.susp >=3.1 & change < 2.1 ~ "Orange", 
+              type %in% c("ED") & perc.susp >=3.1 & change >= 2.1 ~ "Red",
+              type %in% c("ED") & perc.susp >=3.1 & change <= -0.3 ~ "Yellow", 
+              type %in% c("ED") & perc.susp >=3.1 & change < 2.1 ~ "Orange", 
               
-              type == "ED" & perc.susp >=1.6 & change >= 0.3 ~ "Orange",
-              type == "ED" & perc.susp >=1.6 & change <= -0.3 ~ "Green",
-              type == "ED" & perc.susp >=1.6 & change < 0.3 ~ "Yellow",
+              type %in% c("ED") & perc.susp >=1.6 & change >= 0.3 ~ "Orange",
+              type %in% c("ED") & perc.susp >=1.6 & change <= -0.3 ~ "Green",
+              type %in% c("ED") & perc.susp >=1.6 & change < 0.3 ~ "Yellow",
               
-              type == "ED" & perc.susp >=0.6 & change >= 0.3 ~ "Yellow",
-              type == "ED" & perc.susp >=0.6 & change <= -2.0 ~ "Blue",    
-              type == "ED" & perc.susp >=0.6 & change <= 0.3 ~ "Green",    
+              type %in% c("ED") & perc.susp >=0.6 & change >= 0.3 ~ "Yellow",
+              type %in% c("ED") & perc.susp >=0.6 & change <= -2.0 ~ "Blue",    
+              type %in%  c("ED") & perc.susp >=0.6 & change <= 0.3 ~ "Green",    
               
-              type == "ED" & perc.susp < 0.6 & change >= 0.3 ~ "Green",
-              type == "ED" & perc.susp < 0.6 & change  < 0.3 ~ "Blue"
+              type %in%  c("ED") & perc.susp < 0.6 & change >= 0.3 ~ "Green",
+              type %in%  c("ED") & perc.susp < 0.6 & change  < 0.3 ~ "Blue",
+              
+              # Elementary School and Single School District
+              type == "ES" & perc.susp >=6.1 & change > -0.2 ~ "Red",
+              type == "ES" & perc.susp >=6.1 & change <= -1.0 ~ "Yellow",
+              type == "ES" & perc.susp >=6.1 & change <= -0.3 ~ "Orange",
+              
+              type == "ES" & perc.susp >=3.1 & change >= 2.1 ~ "Red",
+              type == "ES" & perc.susp >=3.1 & change <= -0.3 ~ "Yellow", 
+              type == "ES" & perc.susp >=3.1 & change < 2.0 ~ "Orange", 
+              
+              type == "ES" & perc.susp >=1.1 & change >= 0.3 ~ "Orange",
+              type == "ES" & perc.susp >=1.1 & change <= -0.3 ~ "Green",
+              type == "ES" & perc.susp >=1.1 & change < 0.3 ~ "Yellow",
+              
+              type == "ES" & perc.susp >=0.6 & change >= 0.3 ~ "Yellow",
+              type == "ES" & perc.susp >=0.6 & change <= -1.0 ~ "Blue",    
+              type == "ES" & perc.susp >=0.6 & change <= 0.3 ~ "Green",    
+              
+              type == "ES" & perc.susp < 0.6 & change >= 0.3 ~ "Green",
+              type == "ES" & perc.susp < 0.6 & change  < 0.3 ~ "Blue"
               
 
             )
@@ -474,7 +494,7 @@ add.school.susp <- function(df) {
       bind_rows(  susp.school(df,LTEL) ) %>%
       bind_rows( susp.school(df,Asian) )  %>%
         bind_rows( susp.school(df,Filipino) )  %>%
-  #      bind_rows( susp.school(df,Multiple) )  %>%
+        bind_rows( susp.school(df,Multiple) )  %>%
         bind_rows( susp.school(df,`Black/African Am`) )  %>%
         bind_rows( susp.school(df,`Am Indian/Alskn Nat`) )  %>%
         bind_rows( susp.school(df,`Nat Hwiin/Othr Pac Islndr`) )  %>%
