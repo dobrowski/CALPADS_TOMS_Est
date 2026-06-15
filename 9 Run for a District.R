@@ -2,7 +2,7 @@
 # Used to run for a district for all indicators available 
 
 # Set district name for folder to same images 
-save.folder <- "pg"
+save.folder <- "mpusd"
 
 print(save.folder)
 
@@ -59,6 +59,10 @@ kingcity.25 <- read_xlsx(here("data","king city", "2025", "27660500000000_CAASPP
 
 
 lagunita.24 <- read_xlsx(here("data","lagunita", "27660760000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2024.xlsx"),
+                         skip = 1) %>%
+  use.TOMS()
+
+lagunita.25 <- read_xlsx(here("data","lagunita","2025", "27660760000000_CAASPP_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
                          skip = 1) %>%
   use.TOMS()
 
@@ -179,6 +183,11 @@ soledad.25 <- read_xlsx(here("data","soledad", "2025", "27754400000000_CAASPP_St
 somoco.24 <- read_xlsx(here("data","somoco", "CAASPP2024.xlsx")) %>%
   use.TOMS()
 
+somoco.25 <- read_xlsx(here("data","somoco", "2025","CAASPP Student Score Data v2.xlsx")) %>%
+  use.TOMS()
+
+
+
 spreck.24 <- read_xlsx(here("data","spreckels", "27662250000000_CAASPP_Student_Score_Data_File_EnrolledStudentScoreData_2024.xlsx"),
                        skip = 1)
 spreck.24 <- use.TOMS(spreck.24)
@@ -246,6 +255,10 @@ kingcity.elpac.25 <- read_xlsx(here("data","king city","2025" ,"27660500000000_S
                                skip = 1
 )
 
+
+lagunita.elpac.25 <- read_xlsx(here("data","lagunita","2025" ,"27660760000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
+                              skip = 1
+)
 
 
 mission.elpac.25 <- read_xlsx(here("data","mission","2025" ,"27660840000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_TestedStudentScoreData_2025.xlsx"),
@@ -326,6 +339,11 @@ somoco.elpac.24 <- read_xlsx(here("data","somoco","ELPAC2024.xlsx")
 )
 
 
+somoco.elpac.25 <- read_xlsx(here("data","somoco","2025" , "ELPAC Student Score Data v2.xlsx")
+)
+
+
+
 spreck.elpac.25 <- read_xlsx(here("data","spreckels","2025" ,"27662250000000_Summative_ELPAC_and_Summative_Alternate_ELPAC_Student_Score_Data_File_EnrolledStudentScoreData_2025.xlsx"),
                               skip = 1
 )
@@ -400,6 +418,10 @@ kingcity.sus.25 <- read_csv(here("data", "king city" , "2025","7.12_IncidentResu
 lagunita.abs.24 <- read_csv(here("data", "lagunita" , "14.2_StudentAbsencesStudentList.csv"))
 lagunita.demo.24 <- read_csv(here("data", "lagunita" , "8.1_StudentProfileList.csv"))
 lagunita.sus.24 <- read_csv(here("data", "lagunita" , "7.12_IncidentResultsStudentList.csv"))
+
+lagunita.abs.25 <- read_csv(here("data", "lagunita" ,"2025", "14.2_StudentAbsencesStudentList.csv"))
+lagunita.demo.25 <- read_csv(here("data", "lagunita" ,"2025", "8.1_StudentProfileList(EOY3).csv"))
+lagunita.sus.25 <- read_csv(here("data", "lagunita" , "2025","7.12_IncidentResultsStudentList.csv"))
 
 
 
@@ -550,6 +572,12 @@ somoco.2024.grad.24 <- read_csv(here("data", "somoco" , "15.2 - Cohort Outcome -
 somoco.list.grad.24 <- read_csv(here("data", "somoco" , "1.23_GraduatesandCompletersStudentList 2023-2024.csv"))
 somoco.2023.grad.24 <- read_csv(here("data", "somoco" , "15.2 - Cohort Outcome - Student Details 2022-2023.csv"))
 
+somoco.demo.25 <- read_csv(here("data", "somoco" , "2025" , "8.1_StudentProfileList(EOY3).csv"))
+somoco.sus.25 <- read_csv(here("data", "somoco" , "2025" , "7.12_IncidentResultsStudentList.csv"))
+somoco.2025.grad.25 <- read_csv(here("data", "somoco" ,  "2025" ,"15.2 - Cohort Outcome - Student Details (22) 24-25.csv"))
+somoco.list.grad.25 <- read_csv(here("data", "somoco" ,  "2025" ,"1.23_GraduatesandCompletersStudentList.csv"))
+somoco.2024.grad.25 <- read_csv(here("data", "somoco" ,  "2025" ,"15.2 - Cohort Outcome - Student Details (23) 23-24.csv"))
+
 
 
 suhsd.abs.24 <- read_csv(here("data", "suhsd" , "14.2 Student Absences Student List_23-24.csv"))
@@ -577,49 +605,49 @@ wash.sus.25 <- read_csv(here("data", "washington" , "2025" ,"7.12 Student Result
 #### CAASPP Analysis ----
 
 
-cds.code <- scesd.25$CALPADSDistrictCode[1]
+cds.code <- somoco.25$CALPADSDistrictCode[1]
 print(cds.code)
 
 
-graph.wrap(pg.25)
-graph.grid(pg.25)
-save.overall(pg.25)
-save.wrap(pg.25)
-save.grid(pg.25)
+graph.wrap(somoco.25)
+graph.grid(somoco.25)
+save.overall(somoco.25)
+save.wrap(somoco.25)
+save.grid(somoco.25)
 
 
-passing.perc(pg.25)
+passing.perc(somoco.25)
 
-dfs.w.change(pg.25, cds.code) # Remember to update the cds code
+dfs.w.change(somoco.25, cds.code) # Remember to update the cds code
 
-student.group.size(scesd.25, limit.30 = TRUE) %>% print(n = 30)
+student.group.size(somoco.25, limit.30 = TRUE) %>% print(n = 30)
 
 
- pme2(pg.25,HispanicOrLatinoEthnicity)
- pme2(pg.25,SWD)
-# pme2(gonz.25,HOM)
- pme2(pg.25,SED)
-  pme2(pg.25,Asian)
+ pme2(somoco.25,HispanicOrLatinoEthnicity)
+ pme2(somoco.25,SWD)
+ pme2(somoco.25,HOM)
+ pme2(somoco.25,SED)
+#  pme2(pg.25,Asian)
 #  pme2(mpusd.25,HawaiianOrOtherPacificIslander)
 # # pme2(mpusd.25, AmericanIndianorAlaskaNative)
 #  pme2(suhsd.25,Filipino)
 #  pme2(mpusd.25,BlackorAfricanAmerican)
-   pme2(pg.25,White)
-   pme2(pg.25,TwoorMoreRaces)
-  pme2(pg.25,ELdash)
-  # pme2(gonz.25,LTELdash)
+#   pme2(lagunita.25,White)
+ #  pme2(pg.25,TwoorMoreRaces)
+  pme2(somoco.25,ELdash)
+   pme2(somoco.25,LTELdash)
  
 
- dfs2(scesd.25,HispanicOrLatinoEthnicity)
-  dfs2(scesd.25,SWD)
-  dfs2(scesd.25,HOM)
- dfs2(scesd.25 ,SED)
- dfs2(scesd.25, AmericanIndianorAlaskaNative)
- dfs2(scesd.25,Filipino)
-  dfs2(scesd.25,White)
-  dfs2(scesd.25,TwoorMoreRaces)
-  dfs2(scesd.25,ELdash)
-  dfs2(scesd.25,LTELdash)
+ dfs2(somoco.25,HispanicOrLatinoEthnicity)
+  dfs2(somoco.25,SWD)
+  dfs2(somoco.25,HOM)
+ dfs2(somoco.25 ,SED)
+# dfs2(somoco.25, AmericanIndianorAlaskaNative)
+# dfs2(scesd.25,Filipino)
+#  dfs2(scesd.25,White)
+#  dfs2(scesd.25,TwoorMoreRaces)
+  dfs2(somoco.25,ELdash)
+  dfs2(somoco.25,LTELdash)
 #  dfs2(pg.25,Asian)
 # # dfs2(mpusd.25,MigrantStatus)
 #  dfs2(mpusd.25,BlackorAfricanAmerican)
@@ -654,33 +682,32 @@ working <- working %>%
     bind_rows(working.plus)
 
 
-
-dfs.graph(dist = "pg.25",
+dfs.graph(dist = "somoco.25",
           assessment = "ELA",
-          dist.name = "Pacific Grove Unified"
+          dist.name = "South Monterey County"
           )
 
-dfs.graph(dist = "pg.25",
+dfs.graph(dist = "somoco.25",
           assessment = "Math",
-          dist.name = "Pacific Grove Unified"
+          dist.name = "South Monterey County"
 )
 
-dfs.comp(dist = "pg.25",
+dfs.comp(dist = "somoco.25",
          assessment = "ELA",
-         dist.name = "Pacific Grove Unified"
+         dist.name = "South Monterey County"
          ,         old.colors = TRUE)
 
-dfs.comp(dist = "pg.25",
+dfs.comp(dist = "somoco.25",
          assessment = "Math",
-         dist.name = "Pacific Grove Unified"
+         dist.name = "South Monterey County"
          ,         old.colors = TRUE)
 
 
 
 
 
-school.split <-  pg.25  %>%
-    filter(str_detect(CALPADSDistrictName,"Pacific")) 
+school.split <-  somoco.25  %>%
+    filter(str_detect(CALPADSDistrictName,"South")) 
 
 
 holder <-    school.split %>%
@@ -727,9 +754,9 @@ for (i in 1:length(school.list)) {
 # save.folder <- "scesd"
 
 
- cds.id <- pg.25$CALPADSDistrictCode[1]
+ cds.id <- somoco.25$CALPADSDistrictCode[1]
 
-cast.w.change(pg.25, cds.code)
+cast.w.change(somoco.25, cds.code)
 
 
 working <- read_sheet(ss = sheet,
@@ -737,20 +764,20 @@ working <- read_sheet(ss = sheet,
   filter(EstimatedColor %in% c("Red","Orange", "Yellow", "Green", "Blue")) 
 
 
-cast.dash.graph(dist = "pg.25",
+cast.dash.graph(dist = "somoco.25",
                 ccddss = cds.id,
-                dist.name = "Pacific Grove Unified"
+                dist.name = "South Monterey County"
 )
 
-cast.dash.comp(dist = "pg.25",
+cast.dash.comp(dist = "somoco.25",
                ccddss = cds.id,
-               dist.name = "Pacific Unified"
+               dist.name = "South Monterey County"
                , old.colors = TRUE)
 
 # Schools
-school.cds.list <- pg.25 %>%
+school.cds.list <- somoco.25 %>%
   filter(Subject == "Science",
-         CALPADSDistrictName == pg.25$CALPADSDistrictName[1]) %>%
+         CALPADSDistrictName == somoco.25$CALPADSDistrictName[1]) %>%
   select(CALPADSSchoolName, CALPADSSchoolCode) %>%
   unique()
 
@@ -765,19 +792,19 @@ for (i in 1:nrow(school.cds.list)) {
   print(school.cds.list$CALPADSSchoolCode[i])
   
   
-  cast.w.change(pg.25, school.cds.list$CALPADSSchoolCode[i] , level = "S")
+  cast.w.change(somoco.25, school.cds.list$CALPADSSchoolCode[i] , level = "S")
   
   working <- read_sheet(ss = sheet,
                         sheet = "Science") %>%
     filter(EstimatedColor %in% c("Red","Orange", "Yellow", "Green", "Blue")) 
   
   
-  cast.dash.graph(dist = "pg.25",
+  cast.dash.graph(dist = "somoco.25",
                   ccddss = school.cds.list$CALPADSSchoolCode[i],
                   dist.name = school.cds.list$CALPADSSchoolName[i]
   )
   
-  cast.dash.comp(dist = "pg.25",
+  cast.dash.comp(dist = "somoco.25",
                  ccddss = school.cds.list$CALPADSSchoolCode[i],
                  dist.name = school.cds.list$CALPADSSchoolName[i]
                  , old.colors = TRUE)
@@ -791,30 +818,30 @@ for (i in 1:nrow(school.cds.list)) {
 
 
 
-elpi.calc(pg.elpac.25 #%>%
+elpi.calc(somoco.elpac.25 #%>%
           #   filter(str_detect(TestedSchoolName1,"Prune"))
           , "D"
 )
 
-elpi.calc(pg.elpac.25 #%>%
+elpi.calc(somoco.elpac.25 #%>%
           #   filter(str_detect(TestedSchoolName1,"Prune"))
           , "D", "LTEL"
 )
 
-school.list <- pg.elpac.25 %>%
-  filter(str_detect(CALPADSDistrictName,"Pacific")) %>%
+school.list <- somoco.elpac.25 %>%
+  filter(str_detect(CALPADSDistrictName,"South")) %>%
   select(TestedSchoolName1) %>%
   unlist() %>%
   unique()
 
 
 for (i in school.list) {
-    elpi.calc(pg.elpac.25 %>%
+    elpi.calc(somoco.elpac.25 %>%
                   filter(str_detect(TestedSchoolName1,i)),
               "S"
     )
     
-  elpi.calc(pg.elpac.25 %>%
+  elpi.calc(somoco.elpac.25 %>%
               filter(str_detect(TestedSchoolName1,i)),
             "S", "LTEL"
   )
@@ -831,7 +858,7 @@ working <- read_sheet(ss = sheet,
 
 
 school.list <- working %>% 
-  filter(str_detect(District, "Pacific" )) %>%
+  filter(str_detect(District, "South" )) %>%
   select(School) %>%
   unique() %>% unlist()
 
@@ -842,7 +869,7 @@ for (i in school.list) {
 }
 
 
-# elpi.school.graph("San Antonio")
+# elpi.school.graph("San Ardo")
 
 
 ### Chronic -------
@@ -850,16 +877,16 @@ for (i in school.list) {
 
 
 
-pg.abs.joint <- calpads.join(pg.abs.25, pg.demo.25)
+lagunita.abs.joint <- calpads.join(lagunita.abs.25, lagunita.demo.25)
 
 
-chronic.group.rate.w.change(scesd.abs.joint, EthnicityRace, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, Homeless, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, StudentswithDisabilities, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, EnglishLearner, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, LTEL, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, SocioEconomicallyDisadvantaged, cds.code)
-chronic.group.rate.w.change(scesd.abs.joint, All, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, EthnicityRace, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, Homeless, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, StudentswithDisabilities, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, EnglishLearner, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, LTEL, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, SocioEconomicallyDisadvantaged, cds.code)
+chronic.group.rate.w.change(lagunita.abs.joint, All, cds.code)
 
 
 working <- read_sheet(ss = sheet,
@@ -870,14 +897,14 @@ working <- read_sheet(ss = sheet,
 
 
 chronic.dash.graph(
-    dist = "scesd.abs.joint",
-    dist.name = "Salinas City Elementary"
+    dist = "lagunita.abs.joint",
+    dist.name = "Lagunita"
     )
 
 
 chronic.dash.comp(
-  dist = "scesd.abs.joint",
-  dist.name = "Salinas City Elementary"
+  dist = "lagunita.abs.joint",
+  dist.name = "Lagunita"
   ,old.colors = TRUE)
 
 
@@ -915,15 +942,15 @@ chron.all.schools(pg.abs.school.joint , dist.cd = str_sub(cds.code,3,7), limit.c
 
 # mcoe.sus.joint <- susp.df(mcoe.sus.24,mcoe.demo.24 %>% filter(str_detect(SchoolName,"Salin|Well")) )
 
-pg.sus.joint <- susp.df(pg.sus.25,pg.demo.25 )
+somoco.sus.joint <- susp.df(somoco.sus.25,somoco.demo.25 )
 
-susp.group.rate.w.change(pg.sus.joint, EthnicityRace, cds.code)
-susp.group.rate.w.change(pg.sus.joint, Homeless, cds.code)
-susp.group.rate.w.change(pg.sus.joint, StudentswithDisabilities, cds.code)
-susp.group.rate.w.change(pg.sus.joint, EnglishLearner, cds.code)
-susp.group.rate.w.change(pg.sus.joint, LTEL, cds.code)
-susp.group.rate.w.change(pg.sus.joint, SocioEconomicallyDisadvantaged, cds.code)
-susp.group.rate.w.change(pg.sus.joint, All, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, EthnicityRace, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, Homeless, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, StudentswithDisabilities, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, EnglishLearner, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, LTEL, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, SocioEconomicallyDisadvantaged, cds.code)
+susp.group.rate.w.change(somoco.sus.joint, All, cds.code)
 
 
 
@@ -935,19 +962,19 @@ working <- read_sheet(ss = sheet,
 
 
 susp.dash.graph(
-    dist = "pg.sus.joint",
-    dist.name = "Pacific Grove Unified"
+    dist = "somoco.sus.joint",
+    dist.name = "South Monterey County"
 )
 
 
 susp.dash.comp(
-  dist = "pg.sus.joint",
-  dist.name = "Pacific Grove Unified"
+  dist = "somoco.sus.joint",
+  dist.name = "South Monterey County"
   ,old.colors = TRUE)
 
 
 
-pg.sus.school.joint <-  susp.joint.school(pg.sus.25,pg.demo.25)
+somoco.sus.school.joint <-  susp.joint.school(somoco.sus.25,somoco.demo.25 )
 
 # soledad.sus.school.joint %>% 
 #     filter(str_detect(SchoolName,"Soledad"),
@@ -961,7 +988,7 @@ pg.sus.school.joint <-  susp.joint.school(pg.sus.25,pg.demo.25)
 #   #  filter(!str_detect(SchoolName, "Virtual")) %>%
 #     susp.all.schools(dist.cd = 66092, limit.case.cnt = TRUE, old.culrs = FALSE )
 
-susp.all.schools(pg.sus.school.joint , dist.cd = str_sub(cds.code,3,7), limit.case.cnt = TRUE, old.culrs = TRUE)
+susp.all.schools(somoco.sus.school.joint , dist.cd = str_sub(cds.code,3,7), limit.case.cnt = TRUE, old.culrs = TRUE)
 
 ### Grad -------
 
@@ -970,25 +997,25 @@ susp.all.schools(pg.sus.school.joint , dist.cd = str_sub(cds.code,3,7), limit.ca
 # cds.code <- mcoe.25$CALPADSDistrictCode[1]
 # print(cds.code)
 
-grad.func(cohort.old = pg.2024.grad.25, cohort.new = pg.2025.grad.25, completer.list = pg.list.grad.25,
+grad.func(cohort.old = somoco.2024.grad.25, cohort.new = somoco.2025.grad.25, completer.list = somoco.list.grad.25,
           level = "D") %>%
   grad.comp(dist.code = str_sub(cds.code,3,7),  old.colors = TRUE)
 
 
 
 
-grad.func(cohort.old = pg.2024.grad.25, cohort.new = pg.2025.grad.25, completer.list = pg.list.grad.25,
+grad.func(cohort.old = somoco.2024.grad.25, cohort.new = somoco.2025.grad.25, completer.list = somoco.list.grad.25,
           level = "S") %>%
   grad.all.schools(dist.cd = str_sub(cds.code,3,7), limit.case.cnt = TRUE)
 
 
-grad.func(cohort.old = pg.2024.grad.25, cohort.new = pg.2025.grad.25, completer.list = pg.list.grad.25,
+grad.func(cohort.old = somoco.2024.grad.25, cohort.new = somoco.2025.grad.25, completer.list = somoco.list.grad.25,
           level = "D") %>%
   grad.comp(dist.code = str_sub(cds.code,3,7),  old.colors = TRUE) %>%
   grad.comp.school.graph(old.colors = TRUE, level = "D")
 
 
-grad.func(cohort.old = pg.2024.grad.25, cohort.new = pg.2025.grad.25, completer.list = pg.list.grad.25,
+grad.func(cohort.old = somoco.2024.grad.25, cohort.new = somoco.2025.grad.25, completer.list = somoco.list.grad.25,
           level = "D") %>%
   grad.comp(dist.code = str_sub(cds.code,3,7),  old.colors = TRUE) %>%
   grad.graph()

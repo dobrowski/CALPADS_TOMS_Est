@@ -111,7 +111,7 @@ dash.graph <- function(df, dist, grouping = "D") {
                           drop = FALSE) +
         #      scale_color_manual( values = da.pal) +
         
-        labs(title = paste0(tit," Estimated Student Group Status"),
+        labs(title = paste0(tit," ", thisyear ," Estimated Student Group Status"),
              x = "",
              y = "",
              caption = paste0("Source: CAASPP and CALPADS files provided by LEA")
@@ -142,5 +142,32 @@ dash.graph <- function(df, dist, grouping = "D") {
 
 save.folder <- "grid"
 
-dash.graph(all.sheets,"scesd")
+
+all.leas <- c("alisal",
+              "carmel",
+              "gonz",
+              "greenfield",
+              "kingcity",
+              "lagunita",
+              "mission",
+              "mpusd",
+              "nmcusd",
+              "pg",
+              "scesd",
+              "suhsd",
+              "sanantonio",
+              "sanardo",
+              "soledad",
+              "spreck",
+              "wash"
+              )
+
+dash.graph(all.sheets,"somoco")
+
+
+
+for (i in all.leas) {
+    
+    dash.graph(all.sheets,i)
+}
 

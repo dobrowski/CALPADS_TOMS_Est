@@ -758,7 +758,7 @@ confetti.district.colors(google.sheet.dist = "nmcusd",
 
 
 
-confetti.district.colors.all.sheets  <- function(google.sheet.dist = "soledad", ccddss, indi, labl.me = TRUE) {
+confetti.district.colors.all.sheets  <- function(which.sheet = all.sheets, google.sheet.dist = "soledad", ccddss, indi, labl.me = TRUE, el.onlys = FALSE) {
   
   
   
@@ -771,9 +771,18 @@ confetti.district.colors.all.sheets  <- function(google.sheet.dist = "soledad", 
                    indi == "SCIENCE" ~ "Science",
                    indi == "SUSP" ~ "Suspension",
                    TRUE ~ indi) 
+  
+  y.labl <- case_when(indi == "MATH" ~ "Average distance from standard",
+                      indi == "CHRO" ~ "Percent of students",
+                      #   indi == "CCI" ~ "College Career Readiness",
+                      indi == "GRAD" ~ "Percent of students",
+                      indi == "ELPI" ~ "Percent of students",
+                      indi == "ELA" ~ "Average distance from standard",
+                      indi == "SCIENCE" ~ "Average number of science points",
+                      indi == "SUSP" ~ "Percent of students")
 
   
-  working <- all.sheets %>%
+  working <- which.sheet %>%
     filter(str_detect(str_to_lower(indicator), str_to_lower(indi)) 
            ) %>%
     filter(str_starts( District, google.sheet.dist  )) %>%
@@ -794,10 +803,12 @@ confetti.district.colors.all.sheets  <- function(google.sheet.dist = "soledad", 
   
   
   dash.small <- dash.all %>%
+    {if(el.onlys==TRUE)filter(.,str_detect(Group,"Learner|All" ) )else filter(.,str_detect(cds,"0" ) )    } %>%
     filter(cds == ccddss,
            indicator == indi,
            reportingyear >= (as.numeric(thisyear)-2)
-    )
+    ) 
+    
   
   dist.name <- dash.small$districtname[1]
   
@@ -877,6 +888,7 @@ confetti.district.colors.all.sheets  <- function(google.sheet.dist = "soledad", 
     theme(legend.position = "none") +
     labs(title = paste0(dist.name," - ",tit, " by Student Group Over Time"),
          subtitle = paste0("From ", as.numeric(thisyear) - 2 ," through ", thisyear," school years"),
+         y = y.labl,
          caption = paste0(thisyear, " is estimated based on CAASPP and CALPADS files from the district and is expected to change at Dashboard release")
          #        y = "Distance from Standard"
     )
@@ -887,6 +899,9 @@ confetti.district.colors.all.sheets  <- function(google.sheet.dist = "soledad", 
 }   
 
 
+cds.code <- nmcusd.25$CALPADSDistrictCode[1]
+
+
 confetti.district.colors.all.sheets(google.sheet.dist = "gonz",
                          ccddss = cds.code, 
                          indi = "MATH",
@@ -894,9 +909,86 @@ confetti.district.colors.all.sheets(google.sheet.dist = "gonz",
 )
 
 
-confetti.district.colors.all.sheets(google.sheet.dist = "nmcusd",
-                         ccddss = cds.code, 
-                         indi = "ELPI",
-                         labl.me = FALSE
+cds.code <- mpusd.25$CALPADSDistrictCode[1]
+
+
+confetti.district.colors.all.sheets(google.sheet.dist = "mpusd",
+                                    ccddss = cds.code, 
+                                    indi = "CHRO",
+                                    labl.me = FALSE
 )
+
+ggsave(here("output",save.folder, paste0("MPUSD - ","Chronic", " three years.png")), width = 12, height = 7  )
+
+
+
+
+
+
+
+el.sheet <- all.sheets %>%
+  filter(str_detect(Group,"Learner|All" ) )
+
+confetti.district.colors.all.sheets(
+                         which.sheet = el.sheet,
+                         el.onlys = TRUE,
+                          google.sheet.dist = "nmcusd",
+                         ccddss = cds.code, 
+                         indi = "SUSP",
+                         labl.me = FALSE
+) +
+  scale_y_continuous(limits = c(0,100))
+
+# have ELPI y axis go to 100% 
+
+
+ltel.tribble <- tribble(~cds,~district,
+                        nmcusd.25$CALPADSDistrictCode[1], "nmcusd",
+                        scesd.25$CALPADSDistrictCode[1], "scesd" ,
+                        alisal.25$CALPADSDistrictCode[1], "alisal",
+                        mpusd.25$CALPADSDistrictCode[1], "mpusd",
+                        soledad.25$CALPADSDistrictCode[1], "soledad")
+                        
+for (i in 1:5) {
+  
+  for (inder in c("ELA","MATH","CHRO","SUSP")) {
+    
+  
+  confetti.district.colors.all.sheets(
+    which.sheet = el.sheet,
+    el.onlys = TRUE,
+    google.sheet.dist = pull(ltel.tribble[i,2]),
+    ccddss = pull(ltel.tribble[i,1]), 
+    indi = inder,
+    labl.me = FALSE
+  )
+
+  ggsave(here("output",save.folder, paste0(pull(ltel.tribble[i,2])," - ",inder, " three years.png")), width = 12, height = 7  )
+
+    }
+  
+  confetti.district.colors.all.sheets(
+    which.sheet = el.sheet,
+    el.onlys = TRUE,
+    google.sheet.dist = pull(ltel.tribble[i,2]),
+    ccddss = pull(ltel.tribble[i,1]), 
+    indi = "ELPI",
+    labl.me = FALSE
+  ) +
+    scale_y_continuous(limits = c(0,100))
+  
+  ggsave(here("output",save.folder, paste0(pull(ltel.tribble[i,2])," - ","ELPI", " three years.png")), width = 12, height = 7  )
+  
+  
+  
+  
+}
+
+
+
+
+#### For Math CoP -------
+
+
+
 

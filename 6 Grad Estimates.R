@@ -70,9 +70,9 @@ grad.func <- function(cohort.old, cohort.new, completer.list , level = "D") {
     
 grad.5th.joint <- cohort.old  %>%
     { if (level == "S") select(.,SchoolCode, SSID) else select(.,SSID)  }  %>%
-    
+    mutate(SchoolCode = as.character(SchoolCode) ) %>%
     inner_join(completer.list) %>%
-    mutate(SchoolCode = (SchoolCode) ) %>% # sometimes assumes wrongclass numeric/character
+    mutate(SchoolCode = as.character(SchoolCode) ) %>% # sometimes assumes wrongclass numeric/character
 { if (level == "D") select(.,-SchoolCode, -SchoolName) else . }%>%
     mutate(CohortCategory = "HSDiplomaGraduate",
            EnrollmentStatus = as.numeric(str_sub(EnrollmentStatus, 1,2  )),
@@ -89,6 +89,8 @@ print(grad.5th.joint)
 extra.cols <- c(SchoolCode = NA_real_, SchoolName = NA_real_)
 
 school.grad <- cohort.new %>%
+    mutate(SchoolCode = as.character(SchoolCode) ) %>%
+    
     bind_rows(grad.5th.joint) %>%
     filter(CohortCategory %notin% c( "RemovedFromCohort", "OtherTransfers" )) %>%
     mutate(All = "Yes",

@@ -129,11 +129,7 @@ nmcusd.24 <- read_xlsx(here("data","nmcusd", "27738250000000_CAASPP_Student_Scor
                         skip = 1)
  mpusd.24 <- use.TOMS(mpusd.24)
  
- 
- 
- 
-pg.24 <- read_csv(here("data","pg","2024_CAASPP_Student_Score_Data_File.csv")) 
- 
+
 
 ### Reference -------
 
@@ -195,20 +191,7 @@ reference2 <- reference2 %>%
  
  clean.df(nmcusd.24)
  
- lagunita.23 <- lagunita.23 %>%
-     clean.df()
- 
- 
- lagunita <- lagunita %>%
-     clean.df() %>%
-     filter(LanguageCode != "ger",
-            Subject != "Science") %>%
-     mutate(Race = case_when(White == "Yes" ~ "White",
-                             HispanicOrLatinoEthnicity == "Yes" ~ "Latino",
-                             #     NativeHawaiianOrOtherPacificIslander == "Yes" ~ "Pacific Islander",
-                             TRUE ~ "Unknown"))
- 
- 
+
 ### Graphs --------- 
 
  
@@ -367,9 +350,6 @@ save.grid(king.city)
 
 
 # Run for multiple LEAs 
-
-
-leas <- c("santa.rita", "san.lucas", "alisal", "san.antonio", "soledad")
 
 leas <- list(santa.rita, san.lucas, alisal, san.antonio, soledad, pg, salinas.city, king.city, mpusd)
 
@@ -604,10 +584,6 @@ dfs.w.change(nmcusd.25, "27738250000000")
 
 
 dfs.w.change(suhsd.24, "27661590000000")
-temp <- dash.district("27661590000000")
-
-
-temp <- dfs(soledad.24)
 
  
  ### Student Group Size ------
@@ -833,11 +809,6 @@ studentsss <-     deparse(substitute(students))
  
  
  south.monterey.23.demo %>%
-     filter(str_detect(CALPADSSchoolName,"Portola")) %>%
-     pme2(HOM)
- 
- 
- south.monterey.23.demo %>%
      filter(str_detect(CALPADSSchoolName,"King")) %>%
      passing.perc()
  
@@ -909,18 +880,7 @@ temp <- df.demo %>%
  } 
  
  
- 
- spreckels.22 <- clean.df(spreckels.22) 
- spreckels.23 <- clean.df(spreckels.23) 
- spreckels.23 <-  add.demo(spreckels.23, spreckels.23.demo)
 
-
-ss23demo<- soledad.23.demo %>%
-    mutate(`Statewide Student Identifier (SSID)` = SSID)
-
-temp <-  add.demo(soledad, ss23demo)
- 
- 
  ###  All of it ------
   
 wash.22 <- wash.22 %>%
@@ -1085,8 +1045,8 @@ soledad.23 <-  add.demo(soledad.23, soledad.23.demo)
    
    
    
-   school.split <-  suhsd.24 %>%
-       filter(str_detect(CALPADSDistrictName,"Salinas Union")) 
+   school.split <-  nmcusd.25 %>%
+       filter(str_detect(CALPADSDistrictName,"North Monterey")) 
    
    school.split %>%
        split(school.split$CALPADSSchoolName) %>%
